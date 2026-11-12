@@ -10,8 +10,16 @@
 <style>
   :root{--cream:#FEECBC;--char:#210E10;--ash:#6B6064;--paper:#E8E7E3;--red:#FA5E4D;--orange:#F57E30}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;height:100vh;height:100dvh;background:#060304;color:var(--cream);user-select:none;-webkit-user-select:none;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+  body{font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;height:100vh;height:100dvh;background:#060304;color:var(--cream);user-select:none;-webkit-user-select:none;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
   html{height:100%;overflow:hidden}
+  button,a,[role="button"],.circular-gallery,.circular-gallery-canvas,.rail,.flip-overlay,.flip-card,.flip-face,.flip-x,.page,.btn,#galeria{
+    -webkit-tap-highlight-color:transparent!important;
+    -webkit-touch-callout:none;
+    outline:none;
+  }
+  @media (pointer:coarse){
+    button:focus,button:focus-visible,a:focus,.circular-gallery:focus,.rail:focus{outline:none!important;box-shadow:none}
+  }
   .page{position:absolute;inset:0;background:var(--paper);z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .page.burn{background:transparent}
   .page.burn .title,.page.burn .btn,.page.burn .hint{visibility:hidden}
@@ -330,13 +338,22 @@
   /* Scroll más largo: el recorrido termina donde acaba Ilustraciones. Ajusta el 20vh de abajo a gusto */
   .cat + .cat{margin-top:20vh;margin-top:20dvh}
   .flip-prompt{user-select:text;-webkit-user-select:text}
+  /* ===== Pantalla de carga ===== */
+  #loader{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#060304;color:var(--cream);transition:opacity .6s ease,visibility .6s;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+  #loader.done{opacity:0;visibility:hidden;pointer-events:none}
+  .ld-in{width:min(78vw,340px);text-align:center}
+  .ld-brand{font-weight:900;font-size:clamp(1.6rem,7vw,2.4rem);letter-spacing:-.04em;margin-bottom:22px}
+  .ld-bar{height:4px;border-radius:99px;background:rgba(254,236,188,.14);overflow:hidden}
+  .ld-bar i{display:block;height:100%;width:100%;transform-origin:left center;transform:scaleX(0);background:linear-gradient(90deg,#009A0A,#02DF00,#D9FFC7);box-shadow:0 0 14px rgba(2,223,0,.5)}
+  .ld-txt{margin-top:14px;font-size:.8rem;font-weight:700;color:var(--ash);letter-spacing:.02em}
   /* ===== Responsive ===== */
   @media (min-width:1200px){.g-page{max-width:1400px}.rail{height:clamp(440px,62dvh,680px)}}
   @media (max-width:700px){
-    .g-page{padding-top:calc(34px + env(safe-area-inset-top,0px))}
-    .cat h2{margin:30px 0 0}
-    .rail{height:clamp(380px,60dvh,560px)}
-    .cat + .cat{margin-top:6dvh}
+    .g-page{padding-top:calc(28px + env(safe-area-inset-top,0px));padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+    .g-title{font-size:clamp(2rem,9vw,3.2rem);margin-bottom:8px}
+    .cat h2{margin:22px 0 2px}
+    .rail{height:clamp(420px,68dvh,620px)}
+    .cat + .cat{margin-top:8dvh}
   }
   @media (orientation:landscape) and (max-height:520px){
     .g-page{padding-top:22px}
@@ -365,6 +382,7 @@
 </style>
 </head>
 <body>
+  <div id="loader" role="status" aria-live="polite"><div class="ld-in"><div class="ld-brand">FERXDESING</div><div class="ld-bar"><i id="ldBar"></i></div><div class="ld-txt" id="ldTxt">Cargando… 0%</div></div></div>
   <canvas id="bg3d"></canvas><div id="bgdim"></div><div id="bgvig"></div>
   <section class="galeria" id="galeria" aria-label="Galería de prompt">
     <div class="g-page">
@@ -428,16 +446,22 @@
 <script>
 const $=id=>document.getElementById(id);
 const glC=$("gl"),fxC=$("fx"),fx=fxC.getContext("2d"),btn=$("btn"),page=$("page"),hint=$("hint");
-const SP=1.7,DUR=3.1;               // radio final del frente y duración (s) — más rápida
+// Móvil / touch: animación de fuego mucho más ligera (menos DPR, menos partículas, duración más corta)
+const IS_MOBILE = (()=>{try{return matchMedia("(pointer:coarse)").matches||Math.min(innerWidth,innerHeight)<700}catch(_){return false}})();
+const SP=1.7,DUR=IS_MOBILE?2.35:3.1;
+const MAX_PS=IS_MOBILE?28:120;
+const FLECK_N=IS_MOBILE?1:5;        // trozos de papel por frame
+const EMBER_P=IS_MOBILE?0.28:0.7;   // probabilidad de brasa
 let tex,W,H,dpr,phase="idle",t0=0,org=[.5,.5],ps=[],last=0,gl,prog,U,prog_t=0;
 
 function resize(){
-  dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  // En móvil limitamos DPR a 1 durante la quema para no forzar la GPU
+  dpr=IS_MOBILE?1:Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
   [glC,fxC].forEach(c=>{c.width=W*dpr;c.height=H*dpr;c.style.width=W+"px";c.style.height=H+"px"});
   fx.setTransform(dpr,0,0,dpr,0,0);
 }
 addEventListener("resize",resize);resize();
-try{if(matchMedia("(pointer:coarse)").matches)hint.textContent="Toca Entrar"}catch(_){}
+try{if(IS_MOBILE)hint.textContent="Toca Entrar"}catch(_){}
 
 const VS=`#version 300 es
 in vec2 a_pos;out vec2 v_uv;
@@ -578,9 +602,9 @@ class P{
     if(k==="fleck"){
       const s=.4+Math.random()*1.6;
       this.vx=Math.cos(a)*s+(Math.random()-.5)*.6;this.vy=Math.sin(a)*s-.5-Math.random()*.8;
-      this.big=Math.random()<.22;this.dec=.006+Math.random()*.01;this.sz=this.big?5+Math.random()*7:1+Math.random()*3.5;this.fl=Math.random()*6.3;this.fv=(Math.random()-.5)*.15;this.age=0;this.b0=Math.random()*.35;this.ph=Math.random()*9;this.holes=Array.from({length:2},()=>[(Math.random()-.5)*.8,(Math.random()-.5)*.8,.1+Math.random()*.12]);
+      this.big=!IS_MOBILE&&Math.random()<.22;this.dec=.006+Math.random()*.01;this.sz=this.big?5+Math.random()*7:1+Math.random()*3.5;this.fl=Math.random()*6.3;this.fv=(Math.random()-.5)*.15;this.age=0;this.b0=Math.random()*.35;this.ph=Math.random()*9;this.holes=this.big?Array.from({length:2},()=>[(Math.random()-.5)*.8,(Math.random()-.5)*.8,.1+Math.random()*.12]):[];
       this.rot=Math.random()*6.3;this.rv=(Math.random()-.5)*.2;this.c=this.big?["#36321a","#5f5a2a","#9a9a5c"][Math.random()*3|0]:FLECK[Math.random()*5|0];
-      this.pts=Array.from({length:5},(_,i)=>{const an=i/5*6.283,r=.5+Math.random()*.7;return[Math.cos(an)*r,Math.sin(an)*r]});
+      this.pts=Array.from({length:IS_MOBILE?3:5},(_,i)=>{const an=i/(IS_MOBILE?3:5)*6.283,r=.5+Math.random()*.7;return[Math.cos(an)*r,Math.sin(an)*r]});
     }else{
       this.vx=(Math.random()-.5)*.8;this.vy=-.4-Math.random()*1.6;
       this.dec=.004+Math.random()*.01;this.sz=.8+Math.random()*2;this.ph=Math.random()*9;
@@ -588,7 +612,7 @@ class P{
   }
   update(dt){
     const s=dt*60;this.x+=this.vx*s;this.y+=this.vy*s;this.life-=this.dec*s;
-    if(this.k==="fleck"){this.fl+=this.fv*s;this.age+=.006*s;this.ph+=.25*s;if(this.big&&Math.random()<.025*s)ps.push(new P(this.x,this.y,"ember"));this.rot+=this.rv*s;this.vy+=.006*s;this.vx*=.995}
+    if(this.k==="fleck"){this.fl+=this.fv*s;this.age+=.006*s;this.ph+=.25*s;if(this.big&&!IS_MOBILE&&ps.length<MAX_PS&&Math.random()<.025*s)ps.push(new P(this.x,this.y,"ember"));this.rot+=this.rv*s;this.vy+=.006*s;this.vx*=.995}
     else{this.vx+=(Math.random()-.5)*.05*s;this.ph+=.2*s}
   }
   draw(c){
@@ -628,7 +652,7 @@ function ring(t,off){const a=Math.random()*6.283,r=(t*SP+off)*H;return[org[0]*W+
 
 // dibuja el título y el botón en un canvas 2D y lo sube como textura, para que se quemen con el papel
 function uploadContent(r){
-  const k=Math.min(dpr,1.5),cv=document.createElement("canvas");cv.width=W*k;cv.height=H*k;
+  const k=IS_MOBILE?1:Math.min(dpr,1.5),cv=document.createElement("canvas");cv.width=W*k;cv.height=H*k;
   const c=cv.getContext("2d");c.scale(k,k);
   const t=document.querySelector(".title"),tr=t.getBoundingClientRect();
   c.font=getComputedStyle(t).font||"900 30px sans-serif";if("letterSpacing" in c)c.letterSpacing=getComputedStyle(t).letterSpacing;c.fillStyle="#210E10";c.textAlign="center";c.textBaseline="middle";
@@ -655,8 +679,10 @@ function loop(ts){
     const gx=Math.min(1,Math.max(0,(t-.12)/.6));$("galeria").style.opacity=String(gx*gx*(3-2*gx));
 
     if(t>.02&&t<1){
-      for(let i=0;i<5;i++){const[x,y,a]=ring(t,(Math.random()-.5)*.24);ps.push(new P(x,y,"fleck",a))}
-      if(Math.random()<.7){const[x,y]=ring(t,-.07+(Math.random()-.5)*.3);ps.push(new P(x,y,"ember"))}
+      if(ps.length<MAX_PS){
+        for(let i=0;i<FLECK_N;i++){const[x,y,a]=ring(t,(Math.random()-.5)*.24);ps.push(new P(x,y,"fleck",a))}
+        if(Math.random()<EMBER_P){const[x,y]=ring(t,-.07+(Math.random()-.5)*.3);ps.push(new P(x,y,"ember"))}
+      }
     }
     if(t>=1){
       phase="done";page.style.display="none";glC.style.display="none";
@@ -666,7 +692,8 @@ function loop(ts){
       try{ window.iniciarGaleria && window.iniciarGaleria(); }catch(e){ console.error('iniciarGaleria', e); }
       // Forzar resize/wake tras un frame (IntersectionObserver + clientWidth)
       requestAnimationFrame(()=>{ Object.values(window.__galVivas||{}).forEach(v=>v.gal&&v.gal.wake&&v.gal.wake()); });
-      for(let i=0;i<30;i++)ps.push(new P(Math.random()*W,Math.random()*H,"ember"));
+      const nEnd=IS_MOBILE?8:30;
+      for(let i=0;i<nEnd;i++)ps.push(new P(Math.random()*W,Math.random()*H,"ember"));
     }
   }
   for(const p of ps)p.draw(fx);
@@ -677,19 +704,21 @@ if(initGL())requestAnimationFrame(loop);else document.body.insertAdjacentHTML("b
 function startEntry(auto=false){
   if(phase!=="idle")return;
   phase="fire";hint.classList.add("hidden");btn.classList.add("active");
-  // En modo auto (ya entró antes) acortamos aún más la fase del botón
-  const heatMs = auto ? 40 : 55;
-  const toFade = auto ? 700 : 1100;
-  const toHide = auto ? 350 : 450;
-  const toBurn = auto ? 550 : 650;
+  // Móvil y modo auto: secuencia más corta y menos partículas
+  const heatMs = IS_MOBILE ? (auto ? 70 : 90) : (auto ? 40 : 55);
+  const toFade = IS_MOBILE ? (auto ? 420 : 700) : (auto ? 700 : 1100);
+  const toHide = IS_MOBILE ? 280 : (auto ? 350 : 450);
+  const toBurn = IS_MOBILE ? 420 : (auto ? 550 : 650);
   const heat=setInterval(()=>{
     if(phase!=="fire"){clearInterval(heat);return}
+    if(ps.length>=MAX_PS)return;
     const r=btn.getBoundingClientRect();ps.push(new P(r.left+Math.random()*r.width,r.top+r.height/2,"ember"));
   },heatMs);
   setTimeout(()=>{
     phase="fade";btn.classList.add("fading");
     const r=btn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
-    for(let i=0;i<14;i++)ps.push(new P(cx+(Math.random()-.5)*r.width,cy,"ember"));
+    const nBurst=IS_MOBILE?5:14;
+    for(let i=0;i<nBurst;i++)ps.push(new P(cx+(Math.random()-.5)*r.width,cy,"ember"));
     setTimeout(()=>{btn.style.visibility="hidden"},toHide);
     setTimeout(()=>{
       uploadContent(r);page.classList.add("burn");glC.style.display="block";org=[cx/W,cy/H];
@@ -704,7 +733,7 @@ btn.addEventListener("click",()=>startEntry(false));
 try{
   if(localStorage.getItem('ferx_galeria_entered')==='1'){
     // pequeño delay para que el layout y fuentes estén listos
-    setTimeout(()=>startEntry(true), 280);
+    window.__autoEnter=()=>setTimeout(()=>startEntry(true),120);   // la lanza la pantalla de carga al terminar
   }
 }catch(_){}
 </script>
@@ -1849,10 +1878,11 @@ function muestra(i) {
     return 'desk';
   };
   const CFG = {
-    phone:  { itemSize: 1.2,  bend: 1.8, gap: 0.16, font: '900 38px Figtree' },
-    land:   { itemSize: 1.05, bend: 2.2, gap: 0.2,  font: '900 34px Figtree' },
-    tablet: { itemSize: 1.05, bend: 2.4, gap: 0.22, font: '900 32px Figtree' },
-    desk:   { itemSize: 0.95, bend: 2.6, gap: 0.26, font: '900 30px Figtree' }
+    // Teléfono: tarjetas grandes, poca curva, gap corto → se ve amplio y protagonistas
+    phone:  { itemSize: 1.55, bend: 1.15, gap: 0.12, font: '900 36px Figtree' },
+    land:   { itemSize: 1.15, bend: 1.9,  gap: 0.18, font: '900 32px Figtree' },
+    tablet: { itemSize: 1.1,  bend: 2.2,  gap: 0.2,  font: '900 32px Figtree' },
+    desk:   { itemSize: 0.95, bend: 2.6,  gap: 0.26, font: '900 30px Figtree' }
   };
   let perfilActual = perfil();
   function crear(r, recrear) {
@@ -1866,8 +1896,10 @@ function muestra(i) {
       st.gal = CircularGallery(host, {
         items: r.items.map((p, i) => ({ ...p, image: p.image || muestra(r.off + i) })),
         bend: cfg.bend, textColor: '#FEECBC', borderRadius: 0.05, scrollEase: 0.05,
-        fadeEdges: 0.18, itemSize: cfg.itemSize, gap: cfg.gap, intro: !recrear,
-        dpr: Math.min(window.devicePixelRatio || 1, 2),
+        fadeEdges: perfilActual==='phone' ? 0.1 : 0.18,
+        itemSize: cfg.itemSize, gap: cfg.gap, intro: !recrear,
+        // En móvil bajamos DPR del carrusel para que el scroll no vaya a tirones
+        dpr: Math.min(window.devicePixelRatio || 1, perfilActual==='phone' || perfilActual==='land' ? 1.25 : 2),
         openOnClick: false,
         font: cfg.font, fontUrl: 'https://fonts.googleapis.com/css2?family=Figtree:wght@900&display=swap',
         onActiveChange: i => { st.activo = r.items[i]; },
@@ -2323,7 +2355,7 @@ function ottoAnchor(g){g.computeBoundingBox();const b=g.boundingBox,h=b.max.y-b.
 function ottoFlip(g){if(!g.index){const n=g.attributes.position.count,a=new Uint32Array(n);for(let i=0;i<n;i++)a[i]=i;g.setIndex(new THREE.BufferAttribute(a,1))}
   g.setIndex(new THREE.BufferAttribute(g.index.array.slice(),1));const ix=g.index.array;for(let i=0;i<ix.length;i+=3){const t=ix[i+1];ix[i+1]=ix[i+2];ix[i+2]=t}}
 const ottoVS=function(sh){return sh.replace('#include <common>','#include <common>\nvarying vec3 vFP;\nvarying vec3 vFN;').replace('#include <begin_vertex>','#include <begin_vertex>\nvFP=position;\nvFN=normal;')};
-Promise.all([
+window.__ottoReady=Promise.all([
   new Promise(function(res,rej){new THREE.GLTFLoader().load(OTTO_URL,res,undefined,rej)}),
   ottoTex(IK+'cara.png'),ottoTex(IK+'cara_parpadeo.png'),ottoTex(IK+'oreja-izquierda.png'),ottoTex(IK+'oreja-derecha.png')
 ]).then(function(r){
@@ -2545,7 +2577,63 @@ function frame(){
   ottoTick(t);
   renderer.render(scene,camera);requestAnimationFrame(frame);
 }
+window.__sceneWarm=function(){try{ottoTick(clock.getElapsedTime())}catch(_){}camera.updateMatrixWorld();renderer.render(scene,camera);renderer.render(scene,camera)};
 frame();
+})();
+</script>
+<script>
+// ===== Pantalla de carga: fuentes, imágenes, Otto, shaders y galería se preparan antes de mostrar nada =====
+(function(){
+  const bar=document.getElementById('ldBar'),txt=document.getElementById('ldTxt'),L=document.getElementById('loader');
+  const PESO={fuentes:5,imagenes:30,otto:40,galeria:25},hecho={fuentes:0,imagenes:0,otto:0,galeria:0};
+  let shown=0,fakeOtto=0,allDone=false,finished=false;
+  const wt=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(r,ms))]).catch(()=>{});
+
+  const fuentes=wt(Promise.all([document.fonts.load('900 30px Figtree'),document.fonts.ready]),4000).then(()=>{hecho.fuentes=1});
+
+  let urls=[];try{urls=[...FOTOGRAFIAS,...ILUSTRACIONES].map(i=>i.image).filter(Boolean)}catch(_){}
+  let n=0;
+  const imagenes=urls.length?Promise.all(urls.map(u=>wt(new Promise(res=>{
+    const im=new Image();im.crossOrigin='anonymous';im.decoding='async';im.onload=im.onerror=()=>res();im.src=u;
+  }),10000).then(()=>{n++;hecho.imagenes=n/urls.length}))):Promise.resolve().then(()=>{hecho.imagenes=1});
+
+  const otto=wt(window.__ottoReady||Promise.resolve(),15000).then(()=>{
+    try{window.__sceneWarm&&window.__sceneWarm()}catch(e){console.error(e)}   // compila los shaders de la escena 3D
+    hecho.otto=1;
+  });
+
+  function calentarQuema(){   // un dibujo de prueba para que el shader del fuego quede compilado
+    try{
+      if(typeof gl==='undefined'||!gl||typeof U==='undefined'||!U)return;
+      gl.viewport(0,0,glC.width,glC.height);
+      gl.uniform1f(U.u_time,.5);gl.uniform1f(U.u_spread,SP);gl.uniform1f(U.u_aspect,innerWidth/innerHeight);gl.uniform1f(U.u_clock,0);gl.uniform2f(U.u_origin,.5,.5);
+      gl.drawArrays(gl.TRIANGLES,0,3);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+    }catch(_){}
+  }
+  // las ruletas se crean ya (con imágenes en caché) para que no haya tirones al terminar la quema
+  const galeria=Promise.all([fuentes,imagenes]).then(()=>{
+    try{window.iniciarGaleria&&window.iniciarGaleria()}catch(e){console.error(e)}
+    return new Promise(r=>setTimeout(r,600));
+  }).then(()=>{calentarQuema();hecho.galeria=1});
+
+  Promise.all([fuentes,imagenes,otto,galeria]).then(()=>{allDone=true});
+
+  function finish(){
+    if(finished)return;finished=true;
+    bar.style.transform='scaleX(1)';txt.textContent='Listo';L.classList.add('done');
+    setTimeout(()=>{L.style.display='none';try{window.__autoEnter&&window.__autoEnter()}catch(_){}},650);
+  }
+  (function tick(){
+    if(finished)return;
+    if(!hecho.otto)fakeOtto=Math.min(.9,fakeOtto+.004);
+    let t=0;for(const k in PESO)t+=PESO[k]*(k==='otto'?Math.max(hecho.otto,fakeOtto):hecho[k]);
+    const target=allDone?1:Math.min(.97,t/100);
+    shown+=(target-shown)*.12;
+    bar.style.transform='scaleX('+shown+')';txt.textContent='Cargando… '+Math.round(shown*100)+'%';
+    if(allDone&&shown>.985)finish();
+    requestAnimationFrame(tick);
+  })();
+  setTimeout(finish,20000);   // seguridad: si algo tarda de más, se muestra igual
 })();
 </script>
 </body>
