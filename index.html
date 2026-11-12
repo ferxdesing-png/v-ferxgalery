@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@700;900&display=swap" rel="stylesheet">
 <title>Galería de FERXDESING</title>
@@ -10,12 +10,10 @@
 <style>
   :root{--cream:#FEECBC;--char:#210E10;--ash:#6B6064;--paper:#E8E7E3;--red:#FA5E4D;--orange:#F57E30}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;height:100vh;height:100dvh;background:#060304;color:var(--cream);user-select:none;-webkit-user-select:none;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
-  html{height:100%;overflow:hidden}
+  body{font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;height:100vh;height:100dvh;background:#060304;color:var(--cream);user-select:none;-webkit-user-select:none;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-text-size-adjust:100%;touch-action:pan-y}
+  html{height:100%;overflow:hidden;touch-action:manipulation}
   button,a,[role="button"],.circular-gallery,.circular-gallery-canvas,.rail,.flip-overlay,.flip-card,.flip-face,.flip-x,.page,.btn,#galeria{
-    -webkit-tap-highlight-color:transparent!important;
-    -webkit-touch-callout:none;
-    outline:none;
+    -webkit-tap-highlight-color:transparent!important;-webkit-touch-callout:none;outline:none;
   }
   @media (pointer:coarse){
     button:focus,button:focus-visible,a:focus,.circular-gallery:focus,.rail:focus{outline:none!important;box-shadow:none}
@@ -354,6 +352,8 @@
     .cat h2{margin:22px 0 2px}
     .rail{height:clamp(420px,68dvh,620px)}
     .cat + .cat{margin-top:8dvh}
+    /* Sin degradado lateral en el carrusel: las tarjetas llegan limpio al borde */
+    .circular-gallery{--no-edge-fade:1}
   }
   @media (orientation:landscape) and (max-height:520px){
     .g-page{padding-top:22px}
@@ -446,22 +446,54 @@
 <script>
 const $=id=>document.getElementById(id);
 const glC=$("gl"),fxC=$("fx"),fx=fxC.getContext("2d"),btn=$("btn"),page=$("page"),hint=$("hint");
-// Móvil / touch: animación de fuego mucho más ligera (menos DPR, menos partículas, duración más corta)
 const IS_MOBILE = (()=>{try{return matchMedia("(pointer:coarse)").matches||Math.min(innerWidth,innerHeight)<700}catch(_){return false}})();
 const SP=1.7,DUR=IS_MOBILE?2.35:3.1;
 const MAX_PS=IS_MOBILE?28:120;
-const FLECK_N=IS_MOBILE?1:5;        // trozos de papel por frame
-const EMBER_P=IS_MOBILE?0.28:0.7;   // probabilidad de brasa
+const FLECK_N=IS_MOBILE?1:5;
+const EMBER_P=IS_MOBILE?0.28:0.7;
 let tex,W,H,dpr,phase="idle",t0=0,org=[.5,.5],ps=[],last=0,gl,prog,U,prog_t=0;
 
 function resize(){
-  // En móvil limitamos DPR a 1 durante la quema para no forzar la GPU
   dpr=IS_MOBILE?1:Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
   [glC,fxC].forEach(c=>{c.width=W*dpr;c.height=H*dpr;c.style.width=W+"px";c.style.height=H+"px"});
   fx.setTransform(dpr,0,0,dpr,0,0);
 }
 addEventListener("resize",resize);resize();
 try{if(IS_MOBILE)hint.textContent="Toca Entrar"}catch(_){}
+
+// Bloquear pellizco / zoom
+['gesturestart','gesturechange','gestureend'].forEach(ev=>{
+  document.addEventListener(ev,e=>{e.preventDefault()},{passive:false});
+});
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
+
+// ===== Giroscopio: se activa al pulsar Entrar (iOS pide permiso en ese gesto) =====
+window.__gyro={beta:0,gamma:0,ok:false,rawB:0,rawG:0};
+function __onOrient(e){
+  if(e.beta==null||e.gamma==null)return;
+  // beta: inclinar adelante/atrás · gamma: izquierda/derecha
+  window.__gyro.rawB=Math.max(-35,Math.min(35,e.beta-45)); // centrado al sujetar el teléfono
+  window.__gyro.rawG=Math.max(-30,Math.min(30,e.gamma));
+}
+async function enableGyro(){
+  if(window.__gyro.ok)return true;
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+      const p=await DeviceOrientationEvent.requestPermission();
+      if(p!=='granted')return false;
+    }
+    window.addEventListener('deviceorientation',__onOrient,true);
+    window.__gyro.ok=true;
+    return true;
+  }catch(_){return false}
+}
+// suavizado continuo
+(function gyroSmooth(){
+  const g=window.__gyro;
+  g.beta+=(g.rawB-g.beta)*.08;
+  g.gamma+=(g.rawG-g.gamma)*.08;
+  requestAnimationFrame(gyroSmooth);
+})();
 
 const VS=`#version 300 es
 in vec2 a_pos;out vec2 v_uv;
@@ -602,9 +634,9 @@ class P{
     if(k==="fleck"){
       const s=.4+Math.random()*1.6;
       this.vx=Math.cos(a)*s+(Math.random()-.5)*.6;this.vy=Math.sin(a)*s-.5-Math.random()*.8;
-      this.big=!IS_MOBILE&&Math.random()<.22;this.dec=.006+Math.random()*.01;this.sz=this.big?5+Math.random()*7:1+Math.random()*3.5;this.fl=Math.random()*6.3;this.fv=(Math.random()-.5)*.15;this.age=0;this.b0=Math.random()*.35;this.ph=Math.random()*9;this.holes=this.big?Array.from({length:2},()=>[(Math.random()-.5)*.8,(Math.random()-.5)*.8,.1+Math.random()*.12]):[];
+      this.big=Math.random()<.22;this.dec=.006+Math.random()*.01;this.sz=this.big?5+Math.random()*7:1+Math.random()*3.5;this.fl=Math.random()*6.3;this.fv=(Math.random()-.5)*.15;this.age=0;this.b0=Math.random()*.35;this.ph=Math.random()*9;this.holes=Array.from({length:2},()=>[(Math.random()-.5)*.8,(Math.random()-.5)*.8,.1+Math.random()*.12]);
       this.rot=Math.random()*6.3;this.rv=(Math.random()-.5)*.2;this.c=this.big?["#36321a","#5f5a2a","#9a9a5c"][Math.random()*3|0]:FLECK[Math.random()*5|0];
-      this.pts=Array.from({length:IS_MOBILE?3:5},(_,i)=>{const an=i/(IS_MOBILE?3:5)*6.283,r=.5+Math.random()*.7;return[Math.cos(an)*r,Math.sin(an)*r]});
+      this.pts=Array.from({length:5},(_,i)=>{const an=i/5*6.283,r=.5+Math.random()*.7;return[Math.cos(an)*r,Math.sin(an)*r]});
     }else{
       this.vx=(Math.random()-.5)*.8;this.vy=-.4-Math.random()*1.6;
       this.dec=.004+Math.random()*.01;this.sz=.8+Math.random()*2;this.ph=Math.random()*9;
@@ -612,7 +644,7 @@ class P{
   }
   update(dt){
     const s=dt*60;this.x+=this.vx*s;this.y+=this.vy*s;this.life-=this.dec*s;
-    if(this.k==="fleck"){this.fl+=this.fv*s;this.age+=.006*s;this.ph+=.25*s;if(this.big&&!IS_MOBILE&&ps.length<MAX_PS&&Math.random()<.025*s)ps.push(new P(this.x,this.y,"ember"));this.rot+=this.rv*s;this.vy+=.006*s;this.vx*=.995}
+    if(this.k==="fleck"){this.fl+=this.fv*s;this.age+=.006*s;this.ph+=.25*s;if(this.big&&Math.random()<.025*s)ps.push(new P(this.x,this.y,"ember"));this.rot+=this.rv*s;this.vy+=.006*s;this.vx*=.995}
     else{this.vx+=(Math.random()-.5)*.05*s;this.ph+=.2*s}
   }
   draw(c){
@@ -652,7 +684,7 @@ function ring(t,off){const a=Math.random()*6.283,r=(t*SP+off)*H;return[org[0]*W+
 
 // dibuja el título y el botón en un canvas 2D y lo sube como textura, para que se quemen con el papel
 function uploadContent(r){
-  const k=IS_MOBILE?1:Math.min(dpr,1.5),cv=document.createElement("canvas");cv.width=W*k;cv.height=H*k;
+  const k=Math.min(dpr,1.5),cv=document.createElement("canvas");cv.width=W*k;cv.height=H*k;
   const c=cv.getContext("2d");c.scale(k,k);
   const t=document.querySelector(".title"),tr=t.getBoundingClientRect();
   c.font=getComputedStyle(t).font||"900 30px sans-serif";if("letterSpacing" in c)c.letterSpacing=getComputedStyle(t).letterSpacing;c.fillStyle="#210E10";c.textAlign="center";c.textBaseline="middle";
@@ -688,9 +720,7 @@ function loop(ts){
       phase="done";page.style.display="none";glC.style.display="none";
       $("galeria").classList.add("visible");$("galeria").style.opacity="1";
       try{ localStorage.setItem('ferx_galeria_entered','1'); }catch(_){}
-      // Crear las ruletas al final: el host ya tiene tamaño real y el WebGL del burn se liberó
       try{ window.iniciarGaleria && window.iniciarGaleria(); }catch(e){ console.error('iniciarGaleria', e); }
-      // Forzar resize/wake tras un frame (IntersectionObserver + clientWidth)
       requestAnimationFrame(()=>{ Object.values(window.__galVivas||{}).forEach(v=>v.gal&&v.gal.wake&&v.gal.wake()); });
       const nEnd=IS_MOBILE?8:30;
       for(let i=0;i<nEnd;i++)ps.push(new P(Math.random()*W,Math.random()*H,"ember"));
@@ -703,8 +733,9 @@ if(initGL())requestAnimationFrame(loop);else document.body.insertAdjacentHTML("b
 
 function startEntry(auto=false){
   if(phase!=="idle")return;
+  // El clic en Entrar es el gesto de usuario: aquí se pide el permiso del giroscopio (iOS)
+  try{ enableGyro(); }catch(_){}
   phase="fire";hint.classList.add("hidden");btn.classList.add("active");
-  // Móvil y modo auto: secuencia más corta y menos partículas
   const heatMs = IS_MOBILE ? (auto ? 70 : 90) : (auto ? 40 : 55);
   const toFade = IS_MOBILE ? (auto ? 420 : 700) : (auto ? 700 : 1100);
   const toHide = IS_MOBILE ? 280 : (auto ? 350 : 450);
@@ -729,11 +760,16 @@ function startEntry(auto=false){
 
 btn.addEventListener("click",()=>startEntry(false));
 
+// Si el auto-enter no pudo pedir permiso (iOS exige gesto), el primer toque en la galería lo activa
+document.addEventListener('pointerdown',function onceGyro(){
+  if(window.__gyro&&window.__gyro.ok)return;
+  if(phase==='done'||phase==='burning'){try{enableGyro()}catch(_){}}
+},{passive:true});
+
 // Si ya entró antes, lanza la animación de fuego sola (sin esperar el clic)
 try{
   if(localStorage.getItem('ferx_galeria_entered')==='1'){
-    // pequeño delay para que el layout y fuentes estén listos
-    window.__autoEnter=()=>setTimeout(()=>startEntry(true),120);   // la lanza la pantalla de carga al terminar
+    window.__autoEnter=()=>setTimeout(()=>startEntry(true),120);
   }
 }catch(_){}
 </script>
@@ -1878,11 +1914,11 @@ function muestra(i) {
     return 'desk';
   };
   const CFG = {
-    // Teléfono: tarjetas grandes, poca curva, gap corto → se ve amplio y protagonistas
-    phone:  { itemSize: 1.55, bend: 1.15, gap: 0.12, font: '900 36px Figtree' },
-    land:   { itemSize: 1.15, bend: 1.9,  gap: 0.18, font: '900 32px Figtree' },
-    tablet: { itemSize: 1.1,  bend: 2.2,  gap: 0.2,  font: '900 32px Figtree' },
-    desk:   { itemSize: 0.95, bend: 2.6,  gap: 0.26, font: '900 30px Figtree' }
+    // Teléfono: tarjetas grandes, poca curva, SIN fade lateral (conecta con el borde de la página)
+    phone:  { itemSize: 1.55, bend: 1.15, gap: 0.12, font: '900 36px Figtree', fade: 0 },
+    land:   { itemSize: 1.15, bend: 1.9,  gap: 0.18, font: '900 32px Figtree', fade: 0.08 },
+    tablet: { itemSize: 1.1,  bend: 2.2,  gap: 0.2,  font: '900 32px Figtree', fade: 0.12 },
+    desk:   { itemSize: 0.95, bend: 2.6,  gap: 0.26, font: '900 30px Figtree', fade: 0.18 }
   };
   let perfilActual = perfil();
   function crear(r, recrear) {
@@ -1896,10 +1932,8 @@ function muestra(i) {
       st.gal = CircularGallery(host, {
         items: r.items.map((p, i) => ({ ...p, image: p.image || muestra(r.off + i) })),
         bend: cfg.bend, textColor: '#FEECBC', borderRadius: 0.05, scrollEase: 0.05,
-        fadeEdges: perfilActual==='phone' ? 0.1 : 0.18,
-        itemSize: cfg.itemSize, gap: cfg.gap, intro: !recrear,
-        // En móvil bajamos DPR del carrusel para que el scroll no vaya a tirones
-        dpr: Math.min(window.devicePixelRatio || 1, perfilActual==='phone' || perfilActual==='land' ? 1.25 : 2),
+        fadeEdges: cfg.fade, itemSize: cfg.itemSize, gap: cfg.gap, intro: !recrear,
+        dpr: Math.min(window.devicePixelRatio || 1, (perfilActual==='phone'||perfilActual==='land') ? 1.25 : 2),
         openOnClick: false,
         font: cfg.font, fontUrl: 'https://fonts.googleapis.com/css2?family=Figtree:wght@900&display=swap',
         onActiveChange: i => { st.activo = r.items[i]; },
@@ -1943,6 +1977,20 @@ function muestra(i) {
       rails.forEach(r => crear(r, true));
     }, 250);
   });
+
+  // Parallax de las tarjetas con el giroscopio (sutil)
+  (function railGyro(){
+    const gy=window.__gyro||{beta:0,gamma:0};
+    if(gy.ok){
+      const rx=(gy.beta||0)*-0.12;
+      const ry=(gy.gamma||0)*0.18;
+      rails.forEach(r=>{
+        const host=$(r.el);
+        if(host) host.style.transform=`perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+      });
+    }
+    requestAnimationFrame(railGyro);
+  })();
 
 })();
 
@@ -2561,11 +2609,15 @@ function frame(){
   const t=clock.getElapsedTime();
   prog+=(target-prog)*.05;vel+=((prog-lastProg)*60-vel)*.1;lastProg=prog;
   const sw=Math.sin(prog*Math.PI*2),sc=Math.cos(prog*Math.PI*1.4);
-  // vaivén sutil + respiración
-  camera.position.set(-3.2+prog*7.1+Math.sin(t*.4)*.012, .21+prog*.09+Math.sin(t*.6)*.005, sw*.1+Math.cos(t*.35)*.01);dust.position.x=camera.position.x-2.6;
-  camera.rotation.x=-.015+sc*.012+vel*.01;
-  camera.rotation.y=Math.PI/2+sw*.035;
-  camera.rotation.z=sw*.012+Math.sin(t*.3)*.002;
+  // vaivén sutil + respiración + giroscopio (móvil)
+  const gy=window.__gyro||{beta:0,gamma:0};
+  const gX=(gy.beta||0)*0.0018;   // inclinar teléfono → cámara sube/baja
+  const gY=(gy.gamma||0)*0.0022;  // girar → cámara mira a los lados
+  camera.position.set(-3.2+prog*7.1+Math.sin(t*.4)*.012, .21+prog*.09+Math.sin(t*.6)*.005+gX*.15, sw*.1+Math.cos(t*.35)*.01+gY*.2);
+  dust.position.x=camera.position.x-2.6;
+  camera.rotation.x=-.015+sc*.012+vel*.01+gX;
+  camera.rotation.y=Math.PI/2+sw*.035+gY;
+  camera.rotation.z=sw*.012+Math.sin(t*.3)*.002+gY*.25;
   // parpadeo muy leve de la luz
   spot.intensity=5.5+Math.sin(t*5.1)*.03;
   // luz del polvo en espacio del mundo (grupo rotado)
