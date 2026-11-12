@@ -6,11 +6,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@700;900&display=swap" rel="stylesheet">
 <title>Galería de FERXDESING</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%2232%22 fill=%22%230a0a0a%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-family=%22Arial Black%2CArial%2CHelvetica%2Csans-serif%22 font-weight=%22900%22 font-size=%2230%22 letter-spacing=%22-2%22 fill=%22%2302DF00%22%3EGF%3C/text%3E%3C/svg%3E" />
 <style>
   :root{--cream:#FEECBC;--char:#210E10;--ash:#6B6064;--paper:#E8E7E3;--red:#FA5E4D;--orange:#F57E30}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;height:100vh;background:#060304;color:var(--cream);user-select:none}
+  .restart:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
   .page{position:absolute;inset:0;background:var(--paper);z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .page.burn{background:transparent}
   .page.burn .title,.page.burn .btn,.page.burn .hint{visibility:hidden}
@@ -18,9 +19,9 @@
   .btn{position:relative;padding:15px 50px;border-radius:999px;border:none;background:var(--char);color:var(--cream);font-size:.98rem;font-weight:900;letter-spacing:-.01em;cursor:pointer;overflow:hidden;z-index:5;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .7s}
   .btn:hover:not(.active){transform:scale(1.03)}
   .btn:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
-  .fire{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,#009A0A,#02DF00,#D9FFC7);transform:scaleX(0);transform-origin:left center;transition:transform 1.1s cubic-bezier(.4,0,.12,1);z-index:-1}
+  .fire{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,#009A0A,#02DF00,#D9FFC7);transform:scaleX(0);transform-origin:left center;transition:transform 1.5s cubic-bezier(.4,0,.12,1);z-index:-1}
   .btn.active .fire{transform:scaleX(1)}
-  .btn .text{position:relative;z-index:2;transition:opacity .5s,transform .5s,filter .5s}
+  .btn .text{position:relative;z-index:2;transition:opacity .7s,transform .7s,filter .7s}
   .btn.active .text{color:var(--char)}
   .btn.fading .text{opacity:0;transform:scale(.88);filter:blur(2px)}
   .btn.active{box-shadow:0 0 22px rgba(2,223,0,.5),0 0 50px rgba(2,223,0,.25)}
@@ -29,6 +30,9 @@
   #gl{z-index:8;display:none}#fx{z-index:12}
   .hint{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);color:var(--ash);font-size:.8rem;z-index:3;transition:opacity .5s}
   .hint.hidden{opacity:0}
+  .restart{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);background:transparent;border:1px solid #3a2a2c;color:var(--ash);padding:7px 20px;border-radius:999px;font-size:.8rem;cursor:pointer;z-index:20;opacity:0;pointer-events:none;transition:opacity .5s,color .2s,border-color .2s}
+  .restart.visible{opacity:1;pointer-events:auto}
+  .restart:hover{color:var(--cream);border-color:var(--ash)}
 
   /* ===== Galería (CircularGallery de React Bits) ===== */
 .circular-gallery {
@@ -137,13 +141,16 @@
 }
 
   .circular-gallery-label{letter-spacing:-.03em;text-wrap:balance}
-  .galeria{position:absolute;inset:0;z-index:1;background:transparent;opacity:0;pointer-events:none;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3a2a2c transparent}
+  .galeria{position:absolute;inset:0;z-index:1;background:#060304;opacity:0;pointer-events:none;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3a2a2c transparent}
   .galeria.visible{pointer-events:auto}
   .g-page{max-width:1120px;margin:0 auto;padding:54px 22px 130px}
   .g-title{text-align:center;text-transform:uppercase;font-size:clamp(2.2rem,6vw,4rem);font-weight:900;line-height:.95;letter-spacing:-.05em;color:var(--cream)}
   .cat h2{text-transform:uppercase;font-size:clamp(1.3rem,3vw,2rem);font-weight:900;letter-spacing:-.045em;color:var(--cream);margin:58px 0 4px}
-  .rail{position:relative;height:clamp(340px,58vh,500px)}
+  .rail{position:relative;height:clamp(300px,52vh,440px)}
   .rail:focus-visible{outline:2px solid var(--orange);outline-offset:4px;border-radius:12px}
+  .g-copy{display:block;margin:6px auto 0;padding:8px 18px;border-radius:999px;border:1px solid #3a2a2c;background:transparent;color:var(--cream);font-family:inherit;font-size:.78rem;font-weight:900;letter-spacing:-.01em;cursor:pointer;transition:border-color .2s}
+  .g-copy:hover{border-color:var(--orange)}
+  .g-copy:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 
   /* ===== Flip card overlay ===== */
   .flip-overlay{
@@ -311,36 +318,19 @@
   }
   .flip-x:hover{background:rgba(6,3,4,.7)}
   .flip-hint{
-    position:absolute;left:10px;top:50%;
-    transform:translateY(-50%);
-    z-index:5;
-    width:10px;height:10px;
-    border-radius:50%;
-    background:rgba(255,255,255,.28);
-    box-shadow:0 0 0 1px rgba(255,255,255,.18), 0 0 10px rgba(255,255,255,.12);
-    pointer-events:none;
-    animation:flipHintPulse 2.4s ease-in-out infinite;
+    position:absolute;top:14px;left:14px;z-index:5;
+    font-size:.7rem;color:var(--ash);font-weight:700;
+    background:rgba(6,3,4,.4);padding:6px 10px;border-radius:999px;
+    backdrop-filter:blur(6px);pointer-events:none;
   }
-  @keyframes flipHintPulse{
-    0%,100%{opacity:.55;transform:translateY(-50%) scale(1)}
-    50%{opacity:.95;transform:translateY(-50%) scale(1.15)}
-  }
-
-  /* ===== Fondo 3D (escena Mesa · Lámpara) ===== */
-  #bg3d{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
-  #bgdim{position:absolute;inset:0;pointer-events:none;z-index:0;background:rgba(0,0,0,.65)}   /* capa negra sutil sobre la escena */
-  #bgvig{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 48%,transparent 35%,rgba(0,0,0,.7) 100%)}
-  /* Scroll más largo: el recorrido termina donde acaba Ilustraciones. Ajusta el 20vh de abajo a gusto */
-  .cat + .cat{margin-top:20vh}   /* el espacio va ENTRE Fotografía e Ilustraciones, no arriba: la pantalla de inicio queda compacta */
 </style>
 </head>
 <body>
-  <canvas id="bg3d"></canvas><div id="bgdim"></div><div id="bgvig"></div>
   <section class="galeria" id="galeria" aria-label="Galería de prompt">
     <div class="g-page">
       <h1 class="g-title">Galería de<br>prompt</h1>
-      <section class="cat"><h2>Fotografía</h2><div class="rail" id="railFoto"></div></section>
-      <section class="cat"><h2>Ilustraciones</h2><div class="rail" id="railIlu"></div></section>
+      <section class="cat"><h2>Fotografía</h2><div class="rail" id="railFoto"></div><button class="g-copy" type="button" data-rail="foto">Copiar prompt</button></section>
+      <section class="cat"><h2>Ilustraciones</h2><div class="rail" id="railIlu"></div><button class="g-copy" type="button" data-rail="ilu">Copiar prompt</button></section>
     </div>
   </section>
 
@@ -352,6 +342,7 @@
 
   <canvas id="gl"></canvas>
   <canvas id="fx"></canvas>
+  <button class="restart" id="restart">Reiniciar</button>
 
   <div class="flip-overlay" id="flipOverlay" aria-hidden="true">
     <button class="flip-x" id="flipClose" type="button" aria-label="Cerrar">
@@ -360,7 +351,7 @@
     <div class="flip-stage">
       <div class="flip-card" id="flipCard">
         <div class="flip-face flip-front">
-          <span class="flip-hint" aria-hidden="true"></span>
+          <span class="flip-hint">Toca para ver el prompt</span>
           <img id="flipImg" alt="" />
           <div class="flip-title" id="flipTitle"></div>
         </div>
@@ -397,8 +388,8 @@
 
 <script>
 const $=id=>document.getElementById(id);
-const glC=$("gl"),fxC=$("fx"),fx=fxC.getContext("2d"),btn=$("btn"),page=$("page"),hint=$("hint");
-const SP=1.7,DUR=3.1;               // radio final del frente y duración (s) — más rápida
+const glC=$("gl"),fxC=$("fx"),fx=fxC.getContext("2d"),btn=$("btn"),page=$("page"),hint=$("hint"),rs=$("restart");
+const SP=1.7,DUR=4.5;               // radio final del frente y duración (s)
 let tex,W,H,dpr,phase="idle",t0=0,org=[.5,.5],ps=[],last=0,gl,prog,U,prog_t=0;
 
 function resize(){
@@ -629,8 +620,7 @@ function loop(ts){
     }
     if(t>=1){
       phase="done";page.style.display="none";glC.style.display="none";
-      $("galeria").classList.add("visible");$("galeria").style.opacity="1";
-      try{ localStorage.setItem('ferx_galeria_entered','1'); }catch(_){}
+      $("galeria").classList.add("visible");$("galeria").style.opacity="1";rs.classList.add("visible");
       // Crear las ruletas al final: el host ya tiene tamaño real y el WebGL del burn se liberó
       try{ window.iniciarGaleria && window.iniciarGaleria(); }catch(e){ console.error('iniciarGaleria', e); }
       // Forzar resize/wake tras un frame (IntersectionObserver + clientWidth)
@@ -643,39 +633,30 @@ function loop(ts){
 }
 if(initGL())requestAnimationFrame(loop);else document.body.insertAdjacentHTML("beforeend","<p style='position:absolute;bottom:12px;left:12px;z-index:30;color:#FA5E4D;font-size:.8rem'>WebGL2 no disponible</p>");
 
-function startEntry(auto=false){
-  if(phase!=="idle")return;
-  phase="fire";hint.classList.add("hidden");btn.classList.add("active");
-  // En modo auto (ya entró antes) acortamos aún más la fase del botón
-  const heatMs = auto ? 40 : 55;
-  const toFade = auto ? 700 : 1100;
-  const toHide = auto ? 350 : 450;
-  const toBurn = auto ? 550 : 650;
+btn.addEventListener("click",()=>{
+  if(phase!=="idle")return;phase="fire";hint.classList.add("hidden");btn.classList.add("active");
   const heat=setInterval(()=>{
     if(phase!=="fire"){clearInterval(heat);return}
     const r=btn.getBoundingClientRect();ps.push(new P(r.left+Math.random()*r.width,r.top+r.height/2,"ember"));
-  },heatMs);
+  },60);
   setTimeout(()=>{
     phase="fade";btn.classList.add("fading");
     const r=btn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
     for(let i=0;i<14;i++)ps.push(new P(cx+(Math.random()-.5)*r.width,cy,"ember"));
-    setTimeout(()=>{btn.style.visibility="hidden"},toHide);
+    setTimeout(()=>{btn.style.visibility="hidden"},600);
     setTimeout(()=>{
       uploadContent(r);page.classList.add("burn");glC.style.display="block";org=[cx/W,cy/H];
       phase="burning";t0=performance.now();
-    },toBurn);
-  },toFade);
-}
+    },850);
+  },1550);
+});
 
-btn.addEventListener("click",()=>startEntry(false));
-
-// Si ya entró antes, lanza la animación de fuego sola (sin esperar el clic)
-try{
-  if(localStorage.getItem('ferx_galeria_entered')==='1'){
-    // pequeño delay para que el layout y fuentes estén listos
-    setTimeout(()=>startEntry(true), 280);
-  }
-}catch(_){}
+rs.addEventListener("click",()=>{
+  phase="idle";ps=[];btn.classList.remove("active","fading");btn.style.visibility="visible";
+  page.style.display="flex";page.classList.remove("burn");glC.style.display="none";
+  $("galeria").classList.remove("visible");$("galeria").style.opacity="0";rs.classList.remove("visible");
+  hint.classList.remove("hidden");fx.clearRect(0,0,W,H);
+});
 </script>
 <script>
 const DEFAULT_FONT = 'bold 30px Figtree';
@@ -1778,7 +1759,7 @@ const ILUSTRACIONES = [
   },
   {
     text: "Butzbo's artwork",
-    image: "https://ik.imagekit.io/n8qmt5rfh/Butzbo's%20artwork.?updatedAt=1794457166919",
+    image: "https://ik.imagekit.io/n8qmt5rfh/Butzbo's%20artwork",
     description: "[A simple, minimalist, animated illustration in Butzbo's raw, sketchy, and chaotic style. . The entire piece appears handmade (NOT TOO MUCH LINEWORK), punkish, imperfect, and expressive, capturing the rebellious underground cartoon style of Butzbo's artwork.]"
   },
   {
@@ -1818,8 +1799,7 @@ function muestra(i) {
     try {
       st.gal = CircularGallery(host, {
         items: r.items.map((p, i) => ({ ...p, image: p.image || muestra(r.off + i) })),
-        bend: 2.6, textColor: '#FEECBC', borderRadius: 0.05, scrollEase: 0.05,
-        fadeEdges: 0.18, itemSize: 0.95,
+        bend: 3, textColor: '#FEECBC', borderRadius: 0.05, scrollEase: 0.05,
         openOnClick: false,
         font: '900 30px Figtree', fontUrl: 'https://fonts.googleapis.com/css2?family=Figtree:wght@900&display=swap',
         onActiveChange: i => { st.activo = r.items[i]; },
@@ -1847,6 +1827,21 @@ function muestra(i) {
     rails.forEach(crear);
   };
 
+  function copiar(texto) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(texto);
+    const t = document.createElement('textarea'); t.value = texto; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); } finally { t.remove(); }
+    return Promise.resolve();
+  }
+  document.querySelectorAll('.g-copy').forEach(b => b.addEventListener('click', () => {
+    const st = vivas[b.dataset.rail]; if (!st) return;
+    copiar(st.activo.description).then(() => { b.textContent = '¡Copiado!'; setTimeout(() => b.textContent = 'Copiar prompt', 1400); });
+  }));
+  $('restart').addEventListener('click', () => {
+    Object.values(vivas).forEach(v => v.gal && v.gal.destroy());
+    for (const k in vivas) delete vivas[k];
+    $('galeria').scrollTop = 0;
+  });
 })();
 
 // ===== Flip card (giro 3D con prompt) =====
@@ -2088,397 +2083,6 @@ function muestra(i) {
   });
 })();
 
-</script>
-<script>window.sceneScrollEl=document.getElementById('galeria');window.sceneCanvasId='bg3d';</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script>
-(function(){
-const canvas=document.getElementById(window.sceneCanvasId||'c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.outputEncoding=THREE.sRGBEncoding;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x010101);
-const camera=new THREE.PerspectiveCamera(38,1,0.1,60);
-camera.rotation.order='YXZ';
-
-// ---------- texturas procedurales ----------
-function rnd(a,b){return a+Math.random()*(b-a)}
-function woodTextures(P){
-  const W=1024,H=1024,col=document.createElement('canvas'),bmp=document.createElement('canvas');
-  col.width=bmp.width=W;col.height=bmp.height=H;
-  const cx=col.getContext('2d'),bx=bmp.getContext('2d'),ci=cx.createImageData(W,H),bi=bx.createImageData(W,H);
-  const sd=(Math.random()*1e6)|0;
-  const h2=(i,j)=>{let n=(Math.imul(i,374761393)+Math.imul(j,668265263)+sd)|0;n=Math.imul(n^(n>>>13),1274126177);return((n^(n>>>16))>>>0)/4294967296};
-  const sm=t=>t*t*(3-2*t);
-  function vn(x,y,per){const xi=Math.floor(x),yi=Math.floor(y),fx=sm(x-xi),fy=sm(y-yi);
-    const x0=((xi%per)+per)%per,x1=(x0+1)%per,a=h2(x0,yi),b=h2(x1,yi),c=h2(x0,yi+1),d=h2(x1,yi+1);
-    const t=a+(b-a)*fx,u=c+(d-c)*fx;return t+(u-t)*fy;}
-  function fbm(u,v,cx0,cy0){let s=0,a=.5,k=1;for(let o=0;o<4;o++){s+=a*vn(u*cx0*k,v*cy0*k,cx0*k);k*=2;a*=.5}return s/.9375}
-  for(let y=0;y<H;y++){const v=y/H;
-    for(let x=0;x<W;x++){
-      const u=x/W,c1=fbm(u,v,3,3),c2=fbm(u+.3,v,7,7),g=h2(x,y)-.5,st=(vn(u*3,y*.35,3)-.5)*.05;
-      const pore=h2(x,y+99991)>.9988?.3:0;
-      const f=1+(c1-.5)*.26+(c2-.5)*.1+g*.05+st-pore,i=(y*W+x)*4;
-      ci.data[i]=Math.min(255,138*f);ci.data[i+1]=Math.min(255,133*f);ci.data[i+2]=Math.min(255,126*f);ci.data[i+3]=255;
-      const b=Math.max(0,Math.min(255,128+(c2-.5)*50+g*14-pore*160));bi.data[i]=bi.data[i+1]=bi.data[i+2]=b;bi.data[i+3]=255;
-    }}
-  cx.putImageData(ci,0,0);bx.putImageData(bi,0,0);
-  const mk=cv=>{const t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t};
-  const t1=mk(col);t1.encoding=THREE.sRGBEncoding;
-  return {map:t1,bump:mk(bmp)};
-}
-function paperTexture(lines,aged){
-  const cv=document.createElement('canvas');cv.width=512;cv.height=700;
-  const c=cv.getContext('2d');
-  c.fillStyle=aged?'#d8cdb4':'#e9e4d6';c.fillRect(0,0,512,700);
-  for(let i=0;i<2500;i++){c.fillStyle=`rgba(90,70,40,${Math.random()*.05})`;c.fillRect(Math.random()*512,Math.random()*700,2,2)}
-  c.fillStyle='#2a2620';c.font='bold 22px Georgia';c.fillText('MEMORÁNDUM',40,60);
-  c.font='13px Georgia';
-  for(let i=0;i<lines;i++){
-    let w='';const n=Math.floor(rnd(5,11));
-    for(let j=0;j<n;j++)w+=['informe','sector','copia','archivo','nota','fecha','cuarto','revisión','anexo','orden','acta','datos'][Math.floor(Math.random()*12)]+' ';
-    c.globalAlpha=.78;c.fillText(w,40,100+i*18);
-  }
-  c.globalAlpha=1;
-  const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;
-}
-
-// ---------- mesa ----------
-const world=new THREE.Group();scene.add(world);
-const wt=woodTextures();
-wt.map.repeat.set(4.2,1);wt.bump.repeat.set(4.2,1);
-const woodMat=new THREE.MeshStandardMaterial({map:wt.map,bumpMap:wt.bump,bumpScale:.04,roughness:.5,metalness:0});
-const edgeMat=new THREE.MeshStandardMaterial({color:0x777777,roughness:.55,map:wt.map});
-const TW=9,TD=1.9,TH=0.12;
-const topGeo=new THREE.BoxGeometry(TW,TH,TD);
-const top=new THREE.Mesh(topGeo,[edgeMat,edgeMat,woodMat,edgeMat,edgeMat,edgeMat]);
-top.position.y=-TH/2;top.receiveShadow=true;top.castShadow=false;world.add(top);
-// bisel visible (marco más oscuro)
-const rim=new THREE.Mesh(new THREE.BoxGeometry(TW+.03,.02,TD+.03),new THREE.MeshStandardMaterial({color:0x101010,roughness:.8}));
-rim.position.y=-.012;world.add(rim);
-const apron=new THREE.Mesh(new THREE.BoxGeometry(TW-.3,.3,TD-.3),edgeMat);apron.position.y=-.27;world.add(apron);
-[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{
-  const l=new THREE.Mesh(new THREE.BoxGeometry(.14,2,.14),edgeMat);l.position.set(sx*(TW/2-.15),-1.1,sz*(TD/2-.15));world.add(l)});
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshStandardMaterial({color:0x0b0a09,roughness:.95}));
-floor.visible=false;
-
-// ---------- mantel ----------
-(function(){
-  const S=512,cv=document.createElement('canvas');cv.width=cv.height=S;const c=cv.getContext('2d'),im=c.createImageData(S,S);
-  const rx=[],ry=[];for(let i=0;i<256;i++){rx.push(.9+Math.random()*.2);ry.push(.9+Math.random()*.2)}
-  for(let y=0;y<S;y++)for(let x=0;x<S;x++){
-    const a=x>>1,b=y>>1,over=((a+b)&1)===0;
-    const f=.88+((over?rx[a%256]:ry[b%256])-.9)*.12+(over?.012:-.008)+(Math.random()-.5)*.02;
-    const i=(y*S+x)*4,v=Math.max(0,Math.min(1,f))*1.05;
-    im.data[i]=40*v;im.data[i+1]=93*v;im.data[i+2]=75*v;im.data[i+3]=255}
-  c.putImageData(im,0,0);
-  const tex=new THREE.CanvasTexture(cv);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.anisotropy=8;tex.encoding=THREE.sRGBEncoding;
-  tex.repeat.set((TW+1.2)/.5,(TD+1.2)/.5);
-  const g=new THREE.PlaneGeometry(TW+1.2,TD+1.2,260,80);g.rotateX(-Math.PI/2);
-  const p=g.attributes.position,R=.045,hw=TW/2,hd=TD/2;
-  for(let i=0;i<p.count;i++){
-    let x=p.getX(i),z=p.getZ(i),y=0;
-    const ox=Math.abs(x)-hw,oz=Math.abs(z)-hd;
-    if(ox>0||oz>0){
-      const o=ox>0&&oz>0?Math.hypot(ox,oz):Math.max(ox,oz);
-      const ex=Math.max(-hw,Math.min(hw,x)),ez=Math.max(-hd,Math.min(hd,z));
-      let dx=x-ex,dz=z-ez;const dl=Math.hypot(dx,dz)||1;dx/=dl;dz/=dl;
-      let out,drop;
-      if(o<R*Math.PI/2){const t=o/R;out=R*Math.sin(t);drop=R*(1-Math.cos(t))}else{out=R;drop=R+(o-R*Math.PI/2)}
-      out+=(.012+.02*Math.min(1,o*3))*Math.sin(ex*17+ez*17+Math.sin(ex*3)*2)*Math.min(1,o*5);
-      x=ex+dx*out;z=ez+dz*out;y=-drop;
-    }else{y=.004*Math.sin(x*3.1+z*2.3)+.003*Math.sin(x*7.3-z*5.1)}
-    p.setXYZ(i,x,y+.012,z);
-  }
-  g.computeVertexNormals();
-  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({map:tex,roughness:.92,metalness:0}));
-  m.receiveShadow=true;world.add(m);
-})();
-// ---------- papeles ----------
-function paper(w,h,x,z,rot,tex){
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map:tex,roughness:.92,side:THREE.DoubleSide}));
-  m.rotation.set(-Math.PI/2,0,rot);m.position.set(x,.019,z);m.material.polygonOffset=true;m.material.polygonOffsetFactor=-1;m.material.polygonOffsetUnits=-2;m.receiveShadow=true;world.add(m);
-}
-function wrap(c,text,x,y,w,lh){const ws=text.split(' ');let line='';for(const wd of ws){const t=line+wd+' ';if(c.measureText(t).width>w&&line){c.fillText(line,x,y);y+=lh;line=wd+' '}else line=t}c.fillText(line,x,y);return y+lh}
-const BODY=['Desde Venezuela, Ferxdesing mezcla diseño, prompts y entornos 3D para crear piezas con identidad propia.','En la historia, el conejo desafía al socialismo con ingenio, velocidad y humor.','El trabajo parte de la tipografía, la composición y el silencio visual.','Cada prompt es un plano: describe la luz, el material y la atmósfera antes de que exista la imagen.'];
-function newsTexture(head,sub,seed){
-  const cv=document.createElement('canvas');cv.width=640;cv.height=880;const c=cv.getContext('2d');
-  c.fillStyle='#d9d2bf';c.fillRect(0,0,640,880);
-  for(let i=0;i<3500;i++){c.fillStyle=`rgba(80,65,40,${Math.random()*.06})`;c.fillRect(Math.random()*640,Math.random()*880,2,2)}
-  c.fillStyle='#1d1b17';c.textAlign='center';
-  c.font='bold 54px Georgia';c.fillText('FERXDESING',320,70);
-  c.font='italic 15px Georgia';c.fillText('NOTICIAS · DISEÑO · PROMPTS · VENEZUELA',320,96);
-  c.fillRect(30,108,580,3);c.fillRect(30,114,580,1);
-  c.textAlign='left';c.font='bold 40px Georgia';
-  let y=wrap(c,head,30,165,580,44);
-  c.font='italic 18px Georgia';y=wrap(c,sub,30,y+6,580,22)+8;
-  c.fillRect(30,y,580,1);y+=26;
-  c.font='14px Georgia';
-  for(let col=0;col<2;col++){let yy=y;for(let k=0;k<5;k++){yy=wrap(c,BODY[(k+col+seed)%4],30+col*300,yy,275,18)+8}}
-  const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;
-}
-const NEWS=[
-  newsTexture('Ferxdesing crea al conejo que desafía al socialismo','La historia de un personaje nacido en Venezuela, entre el diseño, los prompts y el 3D.',0),
-  newsTexture('Creador de prompts: cómo nace una idea antes de ser imagen','El método de Ferxdesing, de la palabra a la composición final.',1),
-  newsTexture('Prompts con identidad: lo que Ferxdesing enseña sobre crear con IA','Una guía para describir luz, materiales y atmósfera.',2)
-];
-const ottoPapers=[];   // hojas centradas en el carril por donde camina Otto: cada una es una textura propia para poder estamparle huellas
-[-3.7,-2.6,-1.5,-.4,.7,1.8,2.9].forEach(function(x,i){
-  const im=NEWS[i%3].image,cv=document.createElement('canvas');cv.width=im.width;cv.height=im.height;
-  const cx=cv.getContext('2d');cx.drawImage(im,0,0);
-  const tex=new THREE.CanvasTexture(cv);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=8;
-  const rot=[.22,-.18,.3,-.25,.15,-.3,.2][i],z=-.17+[.04,-.05,.02,-.03,.05,-.02,.03][i];
-  paper(.62,.85,x,z,rot,tex);
-  ottoPapers.push({x:x,z:z,rot:rot,w:.62,h:.85,cx:cx,tex:tex,cw:cv.width,ch:cv.height});
-});
-
-// ---------- otto (GLB de pie sobre la mesa, con cara y orejas como en Roomavatar.html) ----------
-const IK='https://ik.imagekit.io/n8qmt5rfh/';
-const OTTO_URL=IK+'otto.glb';
-const OTTO_H=0.3;                 // altura en unidades de escena
-const OTTO_Y=0.009;               // altura de los pies sobre la mesa (baja el valor si flota, sube si se hunde)
-let ottoZ=-0.25;                  // posición lateral (negativo = a la derecha de la cámara); se recalcula en resize() según la pantalla
-let ottoDist=0.9;                 // distancia delante de la cámara; en pantalla vertical (1080×1920) se acerca al centro y se aleja un poco para no salir cortado
-const WALK={leg:.75,knee:.7,arm:.5,elbow:.4,stride:.42}; // balanceo (rad) de muslo, rodilla, brazo y codo · stride = distancia que avanza en UN ciclo de paso completo (unidades de escena; más grande = pasos más lentos y amplios)
-const OTTO_ROT=-Math.PI/2;        // el GLB mira hacia -Z; así mira hacia la cámara (+X)
-const ARM_REST=1.60;              // rad que bajan los brazos desde la "T" (1.57 = pegados al cuerpo)
-const FACE={width:0.62,dy:0.02};  // ancho y altura del rostro proyectado en la cabeza
-const EAR_GAP=0.09, EAR_TILT=12;  // separación e inclinación de orejas (igual que Roomavatar)
-const FRONT_Z=-1;                 // hacia dónde mira el modelo en el GLB
-const ottoEars=[];
-const ottoBlink={u:null,open:null,shut:null,inT:3,t:-1};
-function ottoTex(url){return new Promise(function(res){new THREE.TextureLoader().setCrossOrigin('anonymous').load(url,function(t){t.anisotropy=8;res(t)},undefined,function(){res(null)})})}
-function ottoAnchor(g){g.computeBoundingBox();const b=g.boundingBox,h=b.max.y-b.min.y,pos=g.attributes.position,lim=b.min.y+h*.12;let sx=0,sz=0,n=0;
-  for(let i=0;i<pos.count;i++){if(pos.getY(i)<=lim){sx+=pos.getX(i);sz+=pos.getZ(i);n++}}
-  return new THREE.Vector3(sx/n,b.min.y+h*.05,sz/n)}
-function ottoFlip(g){if(!g.index){const n=g.attributes.position.count,a=new Uint32Array(n);for(let i=0;i<n;i++)a[i]=i;g.setIndex(new THREE.BufferAttribute(a,1))}
-  g.setIndex(new THREE.BufferAttribute(g.index.array.slice(),1));const ix=g.index.array;for(let i=0;i<ix.length;i+=3){const t=ix[i+1];ix[i+1]=ix[i+2];ix[i+2]=t}}
-const ottoVS=function(sh){return sh.replace('#include <common>','#include <common>\nvarying vec3 vFP;\nvarying vec3 vFN;').replace('#include <begin_vertex>','#include <begin_vertex>\nvFP=position;\nvFN=normal;')};
-Promise.all([
-  new Promise(function(res,rej){new THREE.GLTFLoader().load(OTTO_URL,res,undefined,rej)}),
-  ottoTex(IK+'cara.png'),ottoTex(IK+'cara_parpadeo.png'),ottoTex(IK+'oreja-izquierda.png'),ottoTex(IK+'oreja-derecha.png')
-]).then(function(r){
-  const src=r[0].scene,faceOpen=r[1],faceShut=r[2]||r[1],earL=r[3],earR=r[4];
-  src.updateMatrixWorld(true);
-  const bone={},rigid={};let body=null;
-  src.traverse(function(o){const k=(o.userData.name||o.name||'').trim();if(o.isBone)bone[k]=o;else if(o.isSkinnedMesh)body=o;else if(o.isMesh)rigid[k]=o});
-  const bg=body.geometry;bg.computeBoundingBox();
-  // piezas rígidas (cabeza y orejas): se hornea su posición de reposo en la malla
-  const bake=function(n){const o=rigid[n],g=o.geometry;if(o.matrixWorld.determinant()<0)ottoFlip(g);g.applyMatrix4(o.matrixWorld);
-    ['uv','uv1','tangent','color'].forEach(function(k){if(g.attributes[k])g.deleteAttribute(k)});g.computeBoundingBox();if(o.parent)o.parent.remove(o);return g};
-  const G={head:bake('cabeza'),earA:bake('oreja izquierda'),earB:bake('oreja derecha')};
-  const box=bg.boundingBox.clone();for(const k in G)box.union(G[k].boundingBox);
-  const bb=bg.boundingBox,tcx=(bb.min.x+bb.max.x)/2,tcz=(bb.min.z+bb.max.z)/2;
-  // DE PIE: los brazos bajan de la "T" (rotación en Z alrededor de cada hombro)
-  ['mixamorigLeftArm','mixamorigRightArm'].forEach(function(k){
-    const b=bone[k];if(!b)return;
-    const M=b.matrixWorld.clone(),p=new THREE.Vector3().setFromMatrixPosition(M),side=p.x>=tcx?1:-1;
-    const R=new THREE.Matrix4().makeRotationZ(-side*ARM_REST);
-    const nm=new THREE.Matrix4().makeTranslation(p.x,p.y,p.z).multiply(R).multiply(new THREE.Matrix4().makeTranslation(-p.x,-p.y,-p.z)).multiply(M);
-    const inv=new THREE.Matrix4().copy(b.parent.matrixWorld).invert();
-    inv.multiply(nm).decompose(b.position,b.quaternion,b.scale);b.updateMatrixWorld(true)});
-  // caminar: se guarda la pose de reposo de piernas y brazos para balancearlos con el scroll
-  const tm=function(x,y,z){return new THREE.Matrix4().makeTranslation(x,y,z)};
-  ottoWalk=[['mixamorigLeftUpLeg','leg',0],['mixamorigRightUpLeg','leg',Math.PI],['mixamorigLeftLeg','knee',0],['mixamorigRightLeg','knee',Math.PI],
-    ['mixamorigLeftArm','arm',Math.PI],['mixamorigRightArm','arm',0],['mixamorigLeftForeArm','fore',Math.PI],['mixamorigRightForeArm','fore',0]].map(function(d){
-    const b=bone[d[0]];if(!b||!b.parent)return null;const M0=b.matrixWorld.clone();
-    return {b:b,M0:M0,p:new THREE.Vector3().setFromMatrixPosition(M0),pinv:new THREE.Matrix4().copy(b.parent.matrixWorld).invert(),kind:d[1],ph:d[2]}}).filter(Boolean);
-  // materiales (r128: el color hex hay que pasarlo a lineal; la textura de cara se decodifica a mano)
-  const bodyMat=new THREE.MeshStandardMaterial({color:new THREE.Color(0xf3f1ec).convertSRGBToLinear(),roughness:.85,metalness:0,skinning:true});
-  const headMat=bodyMat.clone();
-  const hb=G.head.boundingBox,hw=hb.max.x-hb.min.x,hh=hb.max.y-hb.min.y,asp=faceOpen.image.width/faceOpen.image.height;
-  const hu={uFace:{value:faceOpen},uFaceC:{value:new THREE.Vector2((hb.min.x+hb.max.x)/2,(hb.min.y+hb.max.y)/2+hh*FACE.dy)},uFaceS:{value:new THREE.Vector2(hw*FACE.width,hw*FACE.width/asp)},uFrontZ:{value:FRONT_Z}};
-  headMat.onBeforeCompile=function(sh){Object.assign(sh.uniforms,hu);sh.vertexShader=ottoVS(sh.vertexShader);
-    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vFP;\nvarying vec3 vFN;\nuniform sampler2D uFace;\nuniform vec2 uFaceC;\nuniform vec2 uFaceS;\nuniform float uFrontZ;')
-    .replace('#include <map_fragment>','#include <map_fragment>\n{float facing=smoothstep(0.2,0.5,normalize(vFN).z*uFrontZ);vec2 fuv=vec2(0.5+uFrontZ*(vFP.x-uFaceC.x)/uFaceS.x,0.5+(vFP.y-uFaceC.y)/uFaceS.y);float ins=step(0.0,fuv.x)*step(fuv.x,1.0)*step(0.0,fuv.y)*step(fuv.y,1.0);vec4 fc=texture2D(uFace,fuv);diffuseColor.rgb=mix(diffuseColor.rgb,pow(fc.rgb,vec3(2.2)),fc.a*ins*facing);}')};
-  headMat.customProgramCacheKey=function(){return 'ottohead'};
-  ottoBlink.u=hu.uFace;ottoBlink.open=faceOpen;ottoBlink.shut=faceShut;
-  const meshes=[];
-  const mk=function(g,mat){const m=new THREE.Mesh(g,mat);m.castShadow=true;m.receiveShadow=true;meshes.push(m);return m};
-  // orejas: inclinación + separación como en Roomavatar, e interior negro proyectado de frente
-  const earMesh=function(g,tex,key){
-    const a=ottoAnchor(g),side=((g.boundingBox.min.x+g.boundingBox.max.x)/2)>=tcx?1:-1,w0=g.boundingBox.max.x-g.boundingBox.min.x;
-    g.translate(-a.x,-a.y,-a.z);g.rotateZ(-FRONT_Z*EAR_TILT*Math.PI/180);g.computeBoundingBox();   // el origen de la oreja queda en su base (pivote)
-    let mat=bodyMat;
-    if(tex){const e=g.boundingBox,eu={uEar:{value:tex},uEarC:{value:new THREE.Vector2((e.min.x+e.max.x)/2,(e.min.y+e.max.y)/2)},uEarS:{value:new THREE.Vector2(e.max.x-e.min.x,e.max.y-e.min.y)},uFrontZ:hu.uFrontZ};
-      mat=bodyMat.clone();mat.onBeforeCompile=function(sh){Object.assign(sh.uniforms,eu);sh.vertexShader=ottoVS(sh.vertexShader);
-        sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vFP;\nvarying vec3 vFN;\nuniform sampler2D uEar;\nuniform vec2 uEarC;\nuniform vec2 uEarS;\nuniform float uFrontZ;')
-        .replace('#include <map_fragment>','#include <map_fragment>\n{float facing=smoothstep(0.2,0.5,normalize(vFN).z*uFrontZ);vec2 euv=vec2(0.5+uFrontZ*(vFP.x-uEarC.x)/uEarS.x,0.5+(vFP.y-uEarC.y)/uEarS.y);float ins=step(0.0,euv.x)*step(euv.x,1.0)*step(0.0,euv.y)*step(euv.y,1.0);float ea=texture2D(uEar,euv).a;diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.03),ea*ins*facing);}')};
-      mat.customProgramCacheKey=function(){return key}}
-    const grp=new THREE.Group();grp.position.set(a.x-EAR_GAP*w0*side,a.y,a.z);grp.add(mk(g,mat));
-    ottoEars.push({g:grp,side:side,tw:-1,twIn:2+Math.random()*3});return grp};
-  body.material=bodyMat;body.castShadow=true;body.receiveShadow=true;body.frustumCulled=false;
-  const root=new THREE.Group(),model=new THREE.Group(),offset=new THREE.Group();
-  const sc=OTTO_H/(box.max.y-box.min.y);model.scale.setScalar(sc);root.add(model);
-  ottoWalk.forEach(function(w){w.pc=0;w.zoff=(w.p.x-tcx)*sc});   // separación lateral de cada pie
-  offset.position.set(-tcx,-box.min.y,-tcz);model.add(offset);
-  offset.add(src,mk(G.head,headMat),earMesh(G.earA,earL,'ottoearL'),earMesh(G.earB,earR,'ottoearR'));
-  root.position.set(0,OTTO_Y,ottoZ);root.rotation.y=OTTO_ROT;
-  world.add(root);ottoRoot=root;
-},function(){}).catch(function(e){console.error('No se pudo cargar a Otto',e)});
-function ottoLocal(p,wx,wz){const a=wx-p.x,b=-(wz-p.z),c=Math.cos(p.rot),s=Math.sin(p.rot);return {u:a*c+b*s,v:-a*s+b*c}}
-function ottoStamp(wx,wz){   // huella sutil de pata de conejo (almohadilla alargada + 4 deditos) sobre la hoja que pisa
-  for(const p of ottoPapers){const l=ottoLocal(p,wx,wz);
-    if(Math.abs(l.u)>p.w/2||Math.abs(l.v)>p.h/2)continue;
-    const c=p.cx;c.save();c.translate((l.u/p.w+.5)*p.cw,(.5-l.v/p.h)*p.ch);c.rotate(p.rot+(Math.random()-.5)*.14);
-    c.fillStyle='rgba(58,44,30,.15)';c.beginPath();c.ellipse(-14,0,27,14,0,0,7);c.fill();
-    [[22,-12],[29,-4.5],[29,4.5],[22,12]].forEach(function(d){c.beginPath();c.ellipse(d[0],d[1],5.5,4.5,0,0,7);c.fill()});
-    c.fillStyle='rgba(58,44,30,.08)';c.beginPath();c.ellipse(-14,0,19,8,0,0,7);c.fill();
-    c.restore();p.tex.needsUpdate=true;break}}
-let ottoLift=0,ottoSc=1;
-let ottoRoot=null,ottoWalk=[],ottoLast=0,ottoX=null,ottoPh=0,ottoAmp=0;
-const _tR=new THREE.Matrix4(),_tN=new THREE.Matrix4();
-function ottoTick(t){const dt=Math.max(.001,Math.min(.1,t-ottoLast));ottoLast=t;
-  if(ottoBlink.u){ottoBlink.inT-=dt;if(ottoBlink.inT<=0){ottoBlink.t=.13;ottoBlink.inT=2.5+Math.random()*3.5}
-    if(ottoBlink.t>=0){ottoBlink.t-=dt;ottoBlink.u.value=ottoBlink.shut}else ottoBlink.u.value=ottoBlink.open}
-  if(!ottoRoot)return;
-  // sigue a la cámara: se queda OTTO_DIST delante de ella y el paso depende de lo que avanza
-  const x=camera.position.x-ottoDist;if(ottoX===null)ottoX=x;
-  const dx=x-ottoX;ottoX=x;ottoRoot.position.x=x;
-  ottoPh+=dx/WALK.stride*Math.PI*2;
-  ottoAmp+=(Math.min(1,Math.abs(dx)/dt/.25)-ottoAmp)*.08;   // llega a paso completo con ~0.25 unid/s de scroll
-  ottoRoot.position.z=ottoZ;
-  let on=0;for(const p of ottoPapers){const l=ottoLocal(p,ottoRoot.position.x,ottoRoot.position.z);if(Math.abs(l.u)<p.w/2&&Math.abs(l.v)<p.h/2){on=1;break}}
-  ottoLift+=(on*.009-ottoLift)*.18;                       // sube un poco al pisar una hoja
-  ottoRoot.position.y=OTTO_Y+ottoLift+.005*ottoAmp*Math.abs(Math.cos(ottoPh));
-  for(const w of ottoWalk){
-    const f=ottoPh+w.ph;let th;
-    if(w.kind==='leg'){const cs=Math.cos(f);if(w.pc>0&&cs<=0&&dx>0&&ottoAmp>.35)ottoStamp(ottoRoot.position.x+.06,ottoRoot.position.z+w.zoff);w.pc=cs}   // pie que se apoya = huella
-    if(w.kind==='leg')th=WALK.leg*Math.sin(f);                       // muslo: adelante/atrás
-    else if(w.kind==='knee')th=-WALK.knee*Math.max(0,Math.cos(f));   // rodilla: se dobla al llevar la pierna hacia adelante
-    else if(w.kind==='arm')th=WALK.arm*Math.sin(f);                  // brazo: contrario a la pierna del mismo lado
-    else th=WALK.elbow*(.4+.6*Math.max(0,Math.sin(f)));              // codo: se dobla más con el brazo adelante
-    _tR.makeRotationX(th*ottoAmp);
-    _tN.makeTranslation(w.p.x,w.p.y,w.p.z).multiply(_tR).multiply(new THREE.Matrix4().makeTranslation(-w.p.x,-w.p.y,-w.p.z)).multiply(w.M0);
-    new THREE.Matrix4().copy(w.pinv).multiply(_tN).decompose(w.b.position,w.b.quaternion,w.b.scale);
-  }
-  // orejas de conejo: se echan hacia atrás al caminar, rebotan con cada paso y siguen con retraso; de vez en cuando una se sacude
-  for(const e of ottoEars){
-    e.twIn-=dt;if(e.twIn<=0&&e.tw<0){e.tw=0;e.twIn=2.5+Math.random()*4.5}
-    let tz=0;if(e.tw>=0){e.tw+=dt;tz=-e.side*.22*Math.sin(Math.PI*Math.min(1,e.tw/.28));if(e.tw>=.28)e.tw=-1}
-    const bounce=Math.sin(ottoPh*2+(e.side>0?0:.6));
-    const tx=ottoAmp*(.14+.10*bounce)+.025*Math.sin(t*1.3+e.side*2);
-    tz+=-e.side*ottoAmp*.06*Math.sin(ottoPh+e.side)+.02*Math.sin(t*1.1+e.side);
-    e.g.rotation.x+=(tx-e.g.rotation.x)*.12;
-    e.g.rotation.z+=(tz-e.g.rotation.z)*.12;
-  }}
-
-// ---------- lámpara ----------
-const black=new THREE.MeshStandardMaterial({color:0x08080a,roughness:.28,metalness:.85});
-const lamp=new THREE.Group();lamp.visible=false;
-const base=new THREE.Mesh(new THREE.CylinderGeometry(.2,.23,.055,48),black);base.position.y=.028;base.castShadow=true;lamp.add(base);
-const dome=new THREE.Mesh(new THREE.SphereGeometry(.16,32,12,0,Math.PI*2,0,Math.PI/2),black);dome.scale.set(1,.6,1);dome.position.y=.056;lamp.add(dome);
-const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(0,.07,0),new THREE.Vector3(-.03,.45,.0),new THREE.Vector3(.04,.85,.05),new THREE.Vector3(.2,1.12,.08),new THREE.Vector3(.36,1.2,.1)]);
-const arm=new THREE.Mesh(new THREE.TubeGeometry(curve,40,.018,10),black);arm.castShadow=true;lamp.add(arm);
-const head=new THREE.Group();head.position.set(.38,1.17,.1);lamp.add(head);
-const tilt=new THREE.Group();tilt.rotation.z=-.62;head.add(tilt);
-const shade=new THREE.Mesh(new THREE.SphereGeometry(.24,48,24,0,Math.PI*2,0,Math.PI/2),
-  new THREE.MeshStandardMaterial({color:0x0a0a0c,roughness:.22,metalness:.9,side:THREE.DoubleSide}));
-shade.scale.set(1,.85,1);tilt.add(shade);
-const knob=new THREE.Mesh(new THREE.SphereGeometry(.03,16,16),black);knob.position.y=.2;tilt.add(knob);
-const bulb=new THREE.Mesh(new THREE.SphereGeometry(.05,16,16),new THREE.MeshBasicMaterial({color:0xfff0c8}));bulb.position.y=.02;tilt.add(bulb);
-
-// ---------- luces ----------
-scene.add(new THREE.AmbientLight(0x1a1410,.35));
-const spot=new THREE.SpotLight(0xffe2b8,5.5,14,.6,1,1.4);
-const spotPos=new THREE.Vector3();
-head.updateWorldMatrix(true,false);
-spot.position.set(.1,.06,0);
-spot.target.position.set(0,-.08,-5);
-spot.castShadow=true;spot.shadow.mapSize.set(2048,2048);spot.shadow.bias=-.0004;spot.shadow.radius=4;
-scene.add(camera);camera.add(spot,spot.target);
-const fill=new THREE.PointLight(0xffb36b,.08,5,2);fill.position.set(.4,.6,.2);world.add(fill);
-const rimL=new THREE.PointLight(0x4f6a8f,.12,10,2);rimL.position.set(3,2,-2);world.add(rimL);
-
-// ---------- polvo ----------
-const N=1100,pos=new Float32Array(N*3),seed=new Float32Array(N*4);
-for(let i=0;i<N;i++){
-  pos[i*3]=rnd(-2.6,2.6);pos[i*3+1]=rnd(0,1.4);pos[i*3+2]=rnd(-1.8,1.8);
-  seed[i*4]=Math.random()*6.28;seed[i*4+1]=rnd(.4,1.2);seed[i*4+2]=Math.random();seed[i*4+3]=Math.random()*6.28;
-}
-const dg=new THREE.BufferGeometry();
-dg.setAttribute('position',new THREE.BufferAttribute(pos,3));
-dg.setAttribute('aSeed',new THREE.BufferAttribute(seed,4));
-const dustMat=new THREE.ShaderMaterial({
-  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
-  uniforms:{uTime:{value:0},uLamp:{value:new THREE.Vector3()},uDir:{value:new THREE.Vector3()},uScale:{value:600}},
-  vertexShader:`
-    attribute vec4 aSeed;uniform float uTime;uniform vec3 uLamp;uniform vec3 uDir;uniform float uScale;
-    varying float vI;varying float vTw;
-    void main(){
-      vec3 p=position;float t=uTime*aSeed.y;
-      p.x+=sin(t*.35+aSeed.x)*.28+sin(t*.9+aSeed.w)*.05;
-      p.z+=cos(t*.3+aSeed.w)*.28+cos(t*.8+aSeed.x)*.05;
-      p.y=mod(p.y+uTime*.018*aSeed.y+sin(t*.5+aSeed.x)*.06,1.4);
-      vec3 d=p-uLamp;float L=length(d);d/=L;
-      float cone=smoothstep(.78,.97,dot(d,uDir));
-      float fall=1./(1.+L*L*.06);
-      float edge=smoothstep(0.,.15,p.y)*smoothstep(1.4,1.1,p.y);
-      vTw=.75+.25*sin(uTime*(1.+aSeed.z*2.)+aSeed.x*5.);
-      vI=cone*fall*edge*(.35+aSeed.z*.9);
-      vec4 mv=modelViewMatrix*vec4(p,1.);
-      gl_PointSize=min((.018+aSeed.z*.028)*uScale/-mv.z,6.);
-      gl_Position=projectionMatrix*mv;
-    }`,
-  fragmentShader:`
-    varying float vI;varying float vTw;
-    void main(){
-      vec2 uv=gl_PointCoord-.5;float r=length(uv)*2.;
-      float core=smoothstep(1.,.55,r);float halo=smoothstep(1.,0.,r)*.25;
-      float a=(core+halo)*vI*vTw;
-      if(a<.005)discard;
-      gl_FragColor=vec4(vec3(1.,.86,.62)*a*.55,a);
-    }`
-});
-const dust=new THREE.Points(dg,dustMat);dust.frustumCulled=false;world.add(dust);
-
-// ---------- cámara / scroll ----------
-const ttl=(function(){const cv=document.createElement('canvas');cv.width=2048;cv.height=512;const c=cv.getContext('2d');
-  c.shadowColor='rgba(255,255,255,.9)';c.shadowBlur=34;c.fillStyle='#fff';c.font='bold 240px "Helvetica Neue",Helvetica,Arial,sans-serif';c.textBaseline='middle';
-  const txt='FERXDESING',sp=16;let w=-sp;for(const ch of txt)w+=c.measureText(ch).width+sp;
-  let x=(2048-w)/2;for(const ch of txt){c.fillText(ch,x,262);x+=c.measureText(ch).width+sp}
-  const tex=new THREE.CanvasTexture(cv);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=8;
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(1,.25),new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{map:{value:tex},uTime:{value:0}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform sampler2D map;uniform float uTime;varying vec2 vUv;void main(){float p=fract(uTime/3.);float pos=mix(-.3,1.3,clamp(p/.45,0.,1.));float d=vUv.x-vUv.y*.25-pos;float b=exp(-d*d*180.);vec4 s=texture2D(map,vUv);gl_FragColor=vec4(vec3(1.),s.a*(.45+.5*b));}'}));
-  m.position.set(-4.3,.26,0);m.rotation.y=Math.PI/2;world.add(m);return m})();
-let target=0,prog=0,vel=0,lastProg=0;
-const scrollEl=window.sceneScrollEl||null;   // si la escena es fondo de otra página, el progreso sale del scroll de ese elemento
-function onScroll(){if(scrollEl){const m=scrollEl.scrollHeight-scrollEl.clientHeight;target=m>0?scrollEl.scrollTop/m:0;return}const m=document.documentElement.scrollHeight-innerHeight;target=m>0?scrollY/m:0}
-(scrollEl||window).addEventListener('scroll',onScroll,{passive:true});onScroll();
-function resize(){
-  const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;
-  camera.fov=w<h?52:38;camera.updateProjectionMatrix();
-  {const hh=Math.tan(camera.fov*Math.PI/360)*camera.aspect;ottoDist=w<h?1.15:.9;ottoZ=-ottoDist*hh*.4}   // Otto queda dentro del encuadre en cualquier proporción
-  dustMat.uniforms.uScale.value=h*.55*renderer.getPixelRatio();ttl.scale.setScalar(Math.min(1,w/h*.9));
-}
-addEventListener('resize',resize);resize();
-
-const clock=new THREE.Clock();
-const lampWorld=new THREE.Vector3(),dir=new THREE.Vector3();
-function frame(){
-  const t=clock.getElapsedTime();
-  prog+=(target-prog)*.05;vel+=((prog-lastProg)*60-vel)*.1;lastProg=prog;
-  const sw=Math.sin(prog*Math.PI*2),sc=Math.cos(prog*Math.PI*1.4);
-  // vaivén sutil + respiración
-  camera.position.set(-3.2+prog*7.1+Math.sin(t*.4)*.012, .21+prog*.09+Math.sin(t*.6)*.005, sw*.1+Math.cos(t*.35)*.01);dust.position.x=camera.position.x-2.6;
-  camera.rotation.x=-.015+sc*.012+vel*.01;
-  camera.rotation.y=Math.PI/2+sw*.035;
-  camera.rotation.z=sw*.012+Math.sin(t*.3)*.002;
-  // parpadeo muy leve de la luz
-  spot.intensity=5.5+Math.sin(t*5.1)*.03;
-  // luz del polvo en espacio del mundo (grupo rotado)
-  camera.updateMatrixWorld();world.updateMatrixWorld();
-  lampWorld.copy(world.worldToLocal(camera.localToWorld(spot.position.clone())));
-  dir.copy(world.worldToLocal(camera.localToWorld(spot.target.position.clone()))).sub(lampWorld).normalize();
-  dustMat.uniforms.uLamp.value.copy(lampWorld).sub(dust.position);dustMat.uniforms.uDir.value.copy(dir);
-  dustMat.uniforms.uTime.value=t;ttl.material.uniforms.uTime.value=t;
-  ottoTick(t);
-  renderer.render(scene,camera);requestAnimationFrame(frame);
-}
-frame();
-})();
 </script>
 </body>
 </html>
