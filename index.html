@@ -42,7 +42,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; /* el recorte duro se evita bajando itemSize y subiendo el rail */
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
@@ -146,7 +146,7 @@
   .circular-gallery-label{letter-spacing:-.03em;text-wrap:balance}
   .galeria{position:absolute;inset:0;z-index:1;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:transparent;opacity:0;pointer-events:none;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3a2a2c transparent}
   .galeria.visible{pointer-events:auto}
-  .g-page{max-width:1120px;margin:0 auto;padding:calc(54px + env(safe-area-inset-top,0px)) max(22px,env(safe-area-inset-right,0px)) calc(130px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px))}
+  .g-page{max-width:1120px;margin:0 auto;padding:calc(40px + env(safe-area-inset-top,0px)) max(22px,env(safe-area-inset-right,0px)) calc(48px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px))}
   .g-title{text-align:center;text-transform:uppercase;font-size:clamp(2.2rem,6vw,4rem);font-weight:900;line-height:.95;letter-spacing:-.05em;color:var(--cream)}
   .cat h2{text-transform:uppercase;font-size:clamp(1.3rem,3vw,2rem);font-weight:900;letter-spacing:-.045em;color:var(--cream);margin:58px 0 4px}
   .rail{position:relative;height:clamp(340px,58vh,500px);height:clamp(340px,58dvh,640px)}
@@ -333,8 +333,8 @@
   #bg3d{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
   #bgdim{position:absolute;inset:0;pointer-events:none;z-index:0;background:rgba(0,0,0,.65)}   /* capa negra sutil sobre la escena */
   #bgvig{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 48%,transparent 35%,rgba(0,0,0,.7) 100%)}
-  /* Scroll más largo: el recorrido termina donde acaba Ilustraciones. Ajusta el 20vh de abajo a gusto */
-  .cat + .cat{margin-top:20vh;margin-top:20dvh}
+  /* Espacio entre categorías: corto → el scroll termina al acabar Ilustraciones */
+  .cat + .cat{margin-top:8vh;margin-top:8dvh}
   .flip-prompt{user-select:text;-webkit-user-select:text}
   /* ===== Pantalla de carga ===== */
   #loader{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#060304;color:var(--cream);transition:opacity .6s ease,visibility .6s;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
@@ -347,13 +347,19 @@
   /* ===== Responsive ===== */
   @media (min-width:1200px){.g-page{max-width:1400px}.rail{height:clamp(440px,62dvh,680px)}}
   @media (max-width:700px){
-    .g-page{padding-top:calc(28px + env(safe-area-inset-top,0px));padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
-    .g-title{font-size:clamp(2rem,9vw,3.2rem);margin-bottom:8px}
-    .cat h2{margin:22px 0 2px}
-    .rail{height:clamp(420px,68dvh,620px)}
-    .cat + .cat{margin-top:8dvh}
-    /* Sin degradado lateral en el carrusel: las tarjetas llegan limpio al borde */
-    .circular-gallery{--no-edge-fade:1}
+    .g-page{padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+    .g-title{font-size:clamp(2rem,9vw,3.2rem);margin-bottom:6px}
+    .cat h2{margin:22px 0 6px}
+    /* Carrusel a todo el ancho: el fade de bordes coincide con el frame del móvil */
+    .rail{
+      height:clamp(440px,68dvh,640px);
+      width:100vw;
+      margin-left:calc(50% - 50vw);
+      margin-right:calc(50% - 50vw);
+    }
+    /* overflow hidden + fadeEdges = degradado al borde del frame (sin corte duro) */
+    .circular-gallery{overflow:hidden}
+    .cat + .cat{margin-top:6dvh}
   }
   @media (orientation:landscape) and (max-height:520px){
     .g-page{padding-top:22px}
@@ -1915,10 +1921,12 @@ function muestra(i) {
   };
   const CFG = {
     // Teléfono: tarjetas grandes, poca curva, SIN fade lateral (conecta con el borde de la página)
-    phone:  { itemSize: 1.55, bend: 1.15, gap: 0.12, font: '900 36px Figtree', fade: 0 },
-    land:   { itemSize: 1.15, bend: 1.9,  gap: 0.18, font: '900 32px Figtree', fade: 0.08 },
-    tablet: { itemSize: 1.1,  bend: 2.2,  gap: 0.2,  font: '900 32px Figtree', fade: 0.12 },
-    desk:   { itemSize: 0.95, bend: 2.6,  gap: 0.26, font: '900 30px Figtree', fade: 0.18 }
+    // fade > 0 = degradado suave SOLO en los bordes del frame (las tarjetas laterales se desvanecen, no se cortan en seco)
+    // itemSize moderado para que el título quepa y el centro no entre en la zona de fade
+    phone:  { itemSize: 1.18, bend: 0.9,  gap: 0.16, font: '900 34px Figtree', fade: 0.13 },
+    land:   { itemSize: 1.1,  bend: 1.5,  gap: 0.18, font: '900 32px Figtree', fade: 0.12 },
+    tablet: { itemSize: 1.05, bend: 2.0,  gap: 0.2,  font: '900 32px Figtree', fade: 0.12 },
+    desk:   { itemSize: 0.95, bend: 2.6,  gap: 0.26, font: '900 30px Figtree', fade: 0.14 }
   };
   let perfilActual = perfil();
   function crear(r, recrear) {
