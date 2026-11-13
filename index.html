@@ -437,6 +437,31 @@
     backdrop-filter:blur(6px);
   }
   .flip-x:hover{background:rgba(6,3,4,.7)}
+
+  .flip-share{
+    position:absolute;top:14px;left:14px;z-index:5;
+    width:40px;height:40px;border:0;border-radius:50%;
+    background:rgba(2,223,0,.14);color:rgba(2,223,0,.55);
+    display:grid;place-items:center;cursor:pointer;
+    backdrop-filter:blur(6px);
+    transition:background .2s,color .2s,transform .2s;
+  }
+  .flip-share:hover{background:rgba(2,223,0,.28);color:rgba(2,223,0,.9)}
+  .flip-share[data-ok]{background:rgba(2,223,0,.35);color:#02DF00}
+  .flip-share-toast{
+    position:absolute;top:58px;left:14px;z-index:6;
+    padding:6px 12px;border-radius:999px;
+    background:rgba(6,3,4,.78);color:rgba(2,223,0,.9);
+    font-size:.72rem;font-weight:700;letter-spacing:.02em;
+    opacity:0;pointer-events:none;transform:translateY(-4px);
+    transition:opacity .25s,transform .25s;
+    white-space:nowrap;
+  }
+  .flip-share-toast[data-show]{opacity:1;transform:none}
+  @media (pointer:coarse){
+    .flip-share{width:44px;height:44px}
+  }
+
   .flip-hint{
     position:absolute;left:10px;top:50%;
     transform:translateY(-50%);
@@ -527,6 +552,15 @@
   <canvas id="flame" aria-hidden="true"></canvas>
 
   <div class="flip-overlay" id="flipOverlay" aria-hidden="true">
+    <button class="flip-share" id="flipShare" type="button" aria-label="Compartir enlace" title="Compartir">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="18" cy="5" r="2.6" stroke="currentColor" stroke-width="1.7"/>
+        <circle cx="6" cy="12" r="2.6" stroke="currentColor" stroke-width="1.7"/>
+        <circle cx="18" cy="19" r="2.6" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M8.4 10.8l7.2-4.2M8.4 13.2l7.2 4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="flip-share-toast" id="flipShareToast" role="status">Enlace copiado</div>
     <button class="flip-x" id="flipClose" type="button" aria-label="Cerrar">
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
     </button>
@@ -2403,10 +2437,43 @@ function muestra(i) {
   const copyBtn = document.getElementById('flipCopyBtn');
   const backBtn = document.getElementById('flipBackBtn');
   const closeBtn = document.getElementById('flipClose');
+  const shareBtn = document.getElementById('flipShare');
+  const shareToast = document.getElementById('flipShareToast');
   let currentText = '';
   let currentJson = '';
+  let currentItem = null;
   let promptMode = 'normal';
   const flipMode = document.getElementById('flipMode');
+
+  function slugify(s){
+    return String(s||'')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g,'-')
+      .replace(/^-+|-+$/g,'')
+      .slice(0,80) || 'item';
+  }
+  function itemSlug(item){
+    if(!item) return '';
+    if(item.slug) return item.slug;
+    return slugify(item.text);
+  }
+  function shareUrlFor(item){
+    const slug = itemSlug(item);
+    const base = location.origin + location.pathname + location.search;
+    return base + '#share=' + encodeURIComponent(slug);
+  }
+  let toastTimer = 0;
+  function showShareToast(msg){
+    shareToast.textContent = msg || 'Enlace copiado';
+    shareToast.setAttribute('data-show','');
+    shareBtn.setAttribute('data-ok','');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>{
+      shareToast.removeAttribute('data-show');
+      shareBtn.removeAttribute('data-ok');
+    }, 1800);
+  }
 
   const tipsBtn = document.getElementById('flipTipsBtn');
   const demoSteps = document.getElementById('flipDemoSteps');
@@ -2530,6 +2597,7 @@ function muestra(i) {
 
   function openFlipCard(item){
     if(!item) return;
+    currentItem = item;
     currentText = item.description || '';
     currentJson = item.promptJson || '';
     title.textContent = item.text || '';
@@ -2560,6 +2628,12 @@ function muestra(i) {
     overlay.setAttribute('aria-hidden','true');
     card.removeAttribute('data-flipped');
     setTips(false);
+    // limpia el hash de compartir sin recargar
+    try{
+      if(location.hash && location.hash.indexOf('share=')===1){
+        history.replaceState(null,'',location.pathname+location.search);
+      }
+    }catch(_){}
   }
 
   // Clic en el frente → voltear al prompt (inspeccionar foto primero)
@@ -2615,6 +2689,35 @@ function muestra(i) {
     } catch (_) {}
     return false;
   }
+  shareBtn.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    if(!currentItem) return;
+    const url = shareUrlFor(currentItem);
+    // actualiza hash para que el enlace sea el de esta imagen
+    try{ history.replaceState(null,'',url); }catch(_){}
+    let ok = false;
+    try{
+      if(navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(url);
+        ok = true;
+      }
+    }catch(_){}
+    if(!ok){
+      try{
+        const t = document.createElement('textarea');
+        t.value = url;
+        t.setAttribute('readonly','');
+        t.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+        document.body.appendChild(t);
+        t.focus(); t.select();
+        ok = document.execCommand('copy');
+        t.remove();
+      }catch(_){}
+    }
+    showShareToast(ok ? 'Enlace copiado' : 'Copia el enlace del navegador');
+  });
+
   copyBtn.addEventListener('click', async (e)=>{
     e.preventDefault();
     e.stopPropagation();
@@ -2629,6 +2732,57 @@ function muestra(i) {
       setTimeout(()=>{ copyBtn.textContent='Copiar prompt'; }, 2000);
     }
   });
+
+  // Deep-link: #share=slug abre la tarjeta al cargar / al cambiar el hash
+  function allGalleryItems(){
+    const out = [];
+    try{
+      if(typeof FOTOGRAFIAS !== 'undefined') out.push(...FOTOGRAFIAS);
+      if(typeof ILUSTRACIONES !== 'undefined') out.push(...ILUSTRACIONES);
+    }catch(_){}
+    return out;
+  }
+  function findBySlug(slug){
+    const s = decodeURIComponent(String(slug||'')).toLowerCase();
+    if(!s) return null;
+    return allGalleryItems().find(it => itemSlug(it) === s) || null;
+  }
+  function openFromHash(){
+    try{
+      const h = location.hash || '';
+      const m = h.match(/^#share=([^&]+)/);
+      if(!m) return;
+      const item = findBySlug(m[1]);
+      if(!item) return;
+      // asegura galería visible y lista
+      const go = ()=>{
+        try{
+          if(window.iniciarGaleria) window.iniciarGaleria();
+          const g = document.getElementById('galeria');
+          if(g){ g.classList.add('visible'); g.style.opacity='1'; }
+          const p = document.getElementById('page');
+          if(p) p.style.display='none';
+          openFlipCard(item);
+        }catch(e){ console.error(e); }
+      };
+      // si aún carga, espera un poco
+      if(document.getElementById('loader') && !document.getElementById('loader').classList.contains('done')){
+        const t = setInterval(()=>{
+          if(document.getElementById('loader').classList.contains('done')){
+            clearInterval(t); setTimeout(go, 200);
+          }
+        }, 120);
+        setTimeout(()=>{ clearInterval(t); go(); }, 12000);
+      } else {
+        setTimeout(go, 80);
+      }
+    }catch(_){}
+  }
+  window.addEventListener('hashchange', openFromHash);
+  // expone para el loader / auto-enter
+  window.__openShareFromHash = openFromHash;
+  // intenta al final de este script
+  setTimeout(openFromHash, 0);
 })();
 
 </script>
@@ -3071,7 +3225,8 @@ frame();
   function finish(){
     if(finished)return;finished=true;
     bar.style.transform='scaleX(1)';txt.textContent='Listo';L.classList.add('done');
-    setTimeout(()=>{L.style.display='none';try{window.__autoEnter&&window.__autoEnter()}catch(_){}},650);
+    setTimeout(()=>{L.style.display='none';try{window.__autoEnter&&window.__autoEnter()}catch(_){}
+      try{window.__openShareFromHash&&window.__openShareFromHash()}catch(_){}},650);
   }
   (function tick(){
     if(finished)return;
