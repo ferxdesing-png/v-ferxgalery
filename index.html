@@ -21,18 +21,64 @@
   .page{position:absolute;inset:0;background:var(--paper);z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .page.burn{background:transparent}
   .page.burn .title,.page.burn .btn,.page.burn .hint{visibility:hidden}
-  .title{color:var(--char);font-size:clamp(1.5rem,7.2vw,3.4rem);font-weight:900;margin-bottom:clamp(24px,4vh,40px);letter-spacing:-.045em;white-space:nowrap;text-align:center}
-  .btn{position:relative;padding:clamp(15px,2.2vh,19px) clamp(52px,12vw,76px);min-height:48px;border-radius:999px;border:none;background:var(--char);color:var(--cream);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:900;letter-spacing:-.01em;cursor:pointer;overflow:hidden;z-index:5;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .7s}
-  @media (hover:hover){.btn:hover:not(.active){transform:scale(1.03)}}
-  .btn:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
-  .fire{position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,#009A0A,#02DF00,#D9FFC7);transform:scaleX(0);transform-origin:left center;transition:transform 1.1s cubic-bezier(.4,0,.12,1);z-index:-1}
-  .btn.active .fire{transform:scaleX(1)}
-  .btn .text{position:relative;z-index:2;transition:opacity .5s,transform .5s,filter .5s}
-  .btn.active .text{color:var(--char)}
-  .btn.fading .text{opacity:0;transform:scale(.88);filter:blur(2px)}
-  .btn.active{box-shadow:0 0 22px rgba(2,223,0,.5),0 0 50px rgba(2,223,0,.25)}
+  .title span{display:block}
+  .title{line-height:1.02;color:var(--char);font-size:clamp(1.5rem,7.2vw,3.4rem);font-weight:900;margin-bottom:clamp(28px,5vh,48px);letter-spacing:-.045em;white-space:nowrap;text-align:center}
+  /* Zona circular verde pequeña y sutil: se mantiene la flama encima para entrar */
+  .page{touch-action:none}
+  .btn{
+    position:relative;
+    width:clamp(76px,21vw,92px);
+    height:clamp(76px,21vw,92px);
+    border:0;padding:0;margin:0;border-radius:50%;
+    background:transparent;color:var(--char);font:inherit;
+    cursor:pointer;overflow:visible;z-index:5;
+    appearance:none;-webkit-appearance:none;
+    -webkit-tap-highlight-color:transparent;
+    display:grid;place-items:center;
+    --p:0;
+  }
+  .btn:focus-visible{outline:2px solid var(--orange);outline-offset:6px}
+  .btn .zone{
+    position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,rgba(2,223,0,.13) 0%,rgba(2,223,0,.06) 60%,rgba(2,223,0,.03) 100%);
+    box-shadow:inset 0 0 0 1px rgba(2,223,0,.28),0 0 22px rgba(2,223,0,.10);
+    animation:zoneBreath 2.8s ease-in-out infinite;
+    transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;
+  }
+  .btn .zone::before,.btn .zone::after{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    border:1px solid rgba(2,223,0,.38);opacity:0;
+    animation:zoneRipple 2.8s ease-out infinite;
+  }
+  .btn .zone::after{animation-delay:1.4s}
+  .btn .prog{
+    position:absolute;inset:-3px;border-radius:50%;pointer-events:none;
+    background:conic-gradient(rgba(2,223,0,.85) calc(var(--p)*360deg),transparent 0);
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));
+            mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));
+    opacity:calc(var(--p)*4);
+  }
+  .btn .tap{
+    position:relative;z-index:2;width:40%;height:40%;
+    color:var(--char);opacity:.6;pointer-events:none;
+    animation:tapHand 2.8s ease-in-out infinite;
+    transition:opacity .25s;
+  }
+  @media (hover:hover){.btn:hover .zone{box-shadow:inset 0 0 0 1px rgba(2,223,0,.5),0 0 30px rgba(2,223,0,.2)}}
+  .btn.holding .zone,.btn.active .zone{animation:none}
+  .btn.holding .zone::before,.btn.holding .zone::after,.btn.active .zone::before,.btn.active .zone::after{animation:none;opacity:0}
+  .btn.holding .tap,.btn.active .tap{animation:none;opacity:0}
+  .btn.active .zone{transform:scale(1.08);box-shadow:inset 0 0 0 1px rgba(2,223,0,.7),0 0 40px rgba(2,223,0,.3)}
+  @keyframes zoneBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+  @keyframes zoneRipple{0%{transform:scale(.55);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+  /* seña de mantener: el dedo baja y se queda presionado */
+  @keyframes tapHand{0%,8%{transform:translateY(0) scale(1)}22%,70%{transform:translateY(5px) scale(.9)}88%,100%{transform:translateY(0) scale(1)}}
+  @media (prefers-reduced-motion:reduce){
+    .btn .zone,.btn .zone::before,.btn .zone::after,.btn .tap{animation:none}
+  }
 
   #gl,#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #flame{position:fixed;left:0;top:0;display:none;pointer-events:none;z-index:11;will-change:transform}
   #gl{z-index:8;display:none}#fx{z-index:12}
   .hint{position:absolute;bottom:calc(42px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);color:var(--ash);font-size:.8rem;z-index:3;transition:opacity .5s}
   .hint.hidden{opacity:0}
@@ -148,9 +194,87 @@
   .galeria.visible{pointer-events:auto}
   .g-page{max-width:1120px;margin:0 auto;padding:calc(40px + env(safe-area-inset-top,0px)) max(22px,env(safe-area-inset-right,0px)) calc(48px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px))}
   .g-title{text-align:center;text-transform:uppercase;font-size:clamp(2.2rem,6vw,4rem);font-weight:900;line-height:.95;letter-spacing:-.05em;color:var(--cream)}
-  .cat h2{text-transform:uppercase;font-size:clamp(1.3rem,3vw,2rem);font-weight:900;letter-spacing:-.045em;color:var(--cream);margin:58px 0 4px}
-  .rail{position:relative;height:clamp(340px,58vh,500px);height:clamp(340px,58dvh,640px)}
+  .cat h2{text-transform:uppercase;font-size:clamp(1.3rem,3vw,2rem);font-weight:900;letter-spacing:-.045em;color:var(--cream);margin:58px 0 14px}
+  .rail{position:relative;height:auto;min-height:0}
   .rail:focus-visible{outline:2px solid var(--orange);outline-offset:4px;border-radius:12px}
+
+  /* ===== Mosaico tipo pared de pósters / revista ===== */
+  .mosaic{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-auto-rows:minmax(140px,auto);
+    grid-auto-flow:dense;
+    gap:8px;
+    perspective:1000px;
+    transform-style:preserve-3d;
+    will-change:transform;
+  }
+  @media (min-width:600px){.mosaic{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;grid-auto-rows:minmax(160px,auto)}}
+  @media (min-width:900px){.mosaic{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;grid-auto-rows:minmax(180px,auto)}}
+  @media (min-width:1200px){.mosaic{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;grid-auto-rows:minmax(190px,auto)}}
+  .mosaic-card{
+    position:relative;
+    border:0;
+    padding:0;
+    margin:0;
+    border-radius:6px;
+    overflow:hidden;
+    aspect-ratio:3/4;
+    background:#120a0c;
+    color:inherit;
+    font:inherit;
+    cursor:pointer;
+    isolation:isolate;
+    transform:translateZ(0);
+    appearance:none;-webkit-appearance:none;
+    transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,filter .3s;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mosaic-card:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+  .mosaic-card[data-span="tall"]{
+    grid-row:span 2;
+    aspect-ratio:auto;
+    height:100%;
+    min-height:0;
+  }
+  .mosaic-card[data-span="wide"]{
+    grid-column:span 2;
+    aspect-ratio:4/3;
+  }
+  @media (max-width:599px){
+    .mosaic-card[data-span="wide"]{grid-column:span 2;aspect-ratio:5/4}
+  }
+  .mosaic-card img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    transition:transform .5s cubic-bezier(.2,.8,.2,1),filter .3s;
+  }
+  .mosaic-card::after{
+    content:"";position:absolute;inset:0;z-index:1;
+    background:linear-gradient(to top,rgba(6,3,4,.88) 0%,rgba(6,3,4,.35) 38%,transparent 62%);
+    pointer-events:none;
+  }
+  .mosaic-title{
+    position:absolute;left:10px;right:10px;bottom:10px;z-index:2;
+    margin:0;text-align:left;
+    color:#fff;font-weight:900;font-size:clamp(.7rem,2.2vw,.88rem);
+    letter-spacing:-.03em;line-height:1.12;
+    text-wrap:balance;white-space:pre-line;
+    text-shadow:0 1px 3px rgba(0,0,0,.55);
+    pointer-events:none;
+  }
+  @media (hover:hover){
+    .mosaic-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.55);z-index:2}
+    .mosaic-card:hover img{transform:scale(1.04)}
+  }
+  .mosaic-card[data-pressed]{transform:scale(.97)!important;transition-duration:.12s}
+  .mosaic-card[data-pressed] img{transform:scale(1.02);filter:brightness(.9)}
+  .mosaic-card[data-pulse]{animation:mosaicPulse .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes mosaicPulse{
+    0%{transform:scale(1)}
+    35%{transform:scale(.965)}
+    100%{transform:scale(1)}
+  }
 
   /* ===== Flip card overlay ===== */
   .flip-overlay{
@@ -345,28 +469,18 @@
   .ld-bar i{display:block;height:100%;width:100%;transform-origin:left center;transform:scaleX(0);background:linear-gradient(90deg,#009A0A,#02DF00,#D9FFC7);box-shadow:0 0 14px rgba(2,223,0,.5)}
   .ld-txt{margin-top:14px;font-size:.8rem;font-weight:700;color:var(--ash);letter-spacing:.02em}
   /* ===== Responsive ===== */
-  @media (min-width:1200px){.g-page{max-width:1400px}.rail{height:clamp(440px,62dvh,680px)}}
+  @media (min-width:1200px){.g-page{max-width:1400px}}
   @media (max-width:700px){
-    .g-page{padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+    .g-page{padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px))}
     .g-title{font-size:clamp(2rem,9vw,3.2rem);margin-bottom:6px}
-    .cat h2{margin:22px 0 6px}
-    /* Carrusel a todo el ancho: el fade de bordes coincide con el frame del móvil */
-    .rail{
-      height:clamp(440px,68dvh,640px);
-      width:100vw;
-      margin-left:calc(50% - 50vw);
-      margin-right:calc(50% - 50vw);
-    }
-    /* overflow hidden + fadeEdges = degradado al borde del frame (sin corte duro) */
-    .circular-gallery{overflow:hidden}
+    .cat h2{margin:22px 0 10px}
     .cat + .cat{margin-top:6dvh}
   }
   @media (orientation:landscape) and (max-height:520px){
     .g-page{padding-top:22px}
     .g-title br{display:none}
-    .cat h2{margin:26px 0 0}
-    .rail{height:clamp(230px,82dvh,380px)}
-    .cat + .cat{margin-top:8dvh}
+    .cat h2{margin:18px 0 8px}
+    .cat + .cat{margin-top:6dvh}
   }
   /* tarjeta de prompt (flip) */
   .flip-stage{width:min(92vw,420px);height:min(78vh,600px);height:min(78dvh,600px)}
@@ -399,13 +513,18 @@
   </section>
 
   <div class="page" id="page">
-    <div class="title">Galería de FERXDESING</div>
-    <button class="btn" id="btn"><div class="fire"></div><span class="text">Entrar</span></button>
-    <div class="hint" id="hint">Haz clic en Entrar</div>
+    <div class="title"><span>Galería de</span><span>FERXDESING</span></div>
+    <button class="btn" id="btn" type="button" aria-label="Mantén la flama sobre el círculo para entrar">
+      <span class="zone" aria-hidden="true"></span>
+      <span class="prog" aria-hidden="true"></span>
+      <svg class="tap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 14a8 8 0 0 1-8 8"/><path d="M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2"/><path d="M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1"/><path d="M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+    </button>
+    <div class="hint" id="hint">Mantén el clic sobre el círculo para encender la flama</div>
   </div>
 
   <canvas id="gl"></canvas>
   <canvas id="fx"></canvas>
+  <canvas id="flame" aria-hidden="true"></canvas>
 
   <div class="flip-overlay" id="flipOverlay" aria-hidden="true">
     <button class="flip-x" id="flipClose" type="button" aria-label="Cerrar">
@@ -465,7 +584,7 @@ function resize(){
   fx.setTransform(dpr,0,0,dpr,0,0);
 }
 addEventListener("resize",resize);resize();
-try{if(IS_MOBILE)hint.textContent="Toca Entrar"}catch(_){}
+try{if(IS_MOBILE)hint.textContent="Mantén el dedo sobre el círculo para encender la flama"}catch(_){}
 
 // Bloquear pellizco / zoom
 ['gesturestart','gesturechange','gestureend'].forEach(ev=>{
@@ -694,10 +813,11 @@ function uploadContent(r){
   const c=cv.getContext("2d");c.scale(k,k);
   const t=document.querySelector(".title"),tr=t.getBoundingClientRect();
   c.font=getComputedStyle(t).font||"900 30px sans-serif";if("letterSpacing" in c)c.letterSpacing=getComputedStyle(t).letterSpacing;c.fillStyle="#210E10";c.textAlign="center";c.textBaseline="middle";
-  c.fillText(t.textContent,tr.left+tr.width/2,tr.top+tr.height/2);
-  const g=c.createLinearGradient(r.left,0,r.right,0);g.addColorStop(0,"#009A0A");g.addColorStop(.5,"#02DF00");g.addColorStop(1,"#D9FFC7");
-  const R=r.height/2;c.fillStyle=g;c.beginPath();
-  c.arc(r.left+R,r.top+R,R,Math.PI/2,Math.PI*1.5);c.arc(r.right-R,r.top+R,R,-Math.PI/2,Math.PI/2);c.closePath();c.fill();
+  t.querySelectorAll("span").forEach(sp=>{const q=sp.getBoundingClientRect();c.fillText(sp.textContent,q.left+q.width/2,q.top+q.height/2)});
+  const zx=r.left+r.width/2,zy=r.top+r.height/2,zR=Math.min(r.width,r.height)/2*1.05;
+  const rg=c.createRadialGradient(zx,zy,0,zx,zy,zR);rg.addColorStop(0,"rgba(2,223,0,.13)");rg.addColorStop(.7,"rgba(2,223,0,.07)");rg.addColorStop(1,"rgba(2,223,0,.2)");
+  c.fillStyle=rg;c.beginPath();c.arc(zx,zy,zR,0,Math.PI*2);c.fill();
+  c.strokeStyle="rgba(2,223,0,.4)";c.lineWidth=1;c.stroke();
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);
@@ -707,6 +827,7 @@ function loop(ts){
   if(!last)last=ts;const dt=Math.min(.045,(ts-last)/1000);last=ts;
   for(let i=ps.length-1;i>=0;i--){ps[i].update(dt);if(ps[i].life<=0)ps.splice(i,1)}
   fx.clearRect(0,0,W,H);
+  try{dwellTick(dt)}catch(_){}
 
   if(phase==="burning"){
     const t=(ts-t0)/1000/DUR;
@@ -725,7 +846,7 @@ function loop(ts){
     if(t>=1){
       phase="done";page.style.display="none";glC.style.display="none";
       $("galeria").classList.add("visible");$("galeria").style.opacity="1";
-      try{ localStorage.setItem('ferx_galeria_entered','1'); }catch(_){}
+      try{ localStorage.setItem('ferx_galeria_entered',hoyKey()); }catch(_){}
       try{ window.iniciarGaleria && window.iniciarGaleria(); }catch(e){ console.error('iniciarGaleria', e); }
       requestAnimationFrame(()=>{ Object.values(window.__galVivas||{}).forEach(v=>v.gal&&v.gal.wake&&v.gal.wake()); });
       const nEnd=IS_MOBILE?8:30;
@@ -737,34 +858,75 @@ function loop(ts){
 }
 if(initGL())requestAnimationFrame(loop);else document.body.insertAdjacentHTML("beforeend","<p style='position:absolute;bottom:12px;left:12px;z-index:30;color:#FA5E4D;font-size:.8rem'>WebGL2 no disponible</p>");
 
-function startEntry(auto=false){
+// La flama es el clic: se mantiene presionado (la flama sigue al puntero) y, al tenerla 1,3 s sobre el círculo, el papel se quema y entra
+const hold={on:false,id:null,x:0,y:0,dw:0};
+const DW=1.3;
+const flameU=()=>Math.max(38,Math.min(62,Math.min(W,H)*.13));
+function inCircle(){
+  const r=btn.getBoundingClientRect(),R=Math.min(r.width,r.height)/2;
+  return Math.hypot(hold.x-(r.left+r.width/2),hold.y-(r.top+r.height/2))<=R*1.15;
+}
+function dwellTick(dt){
   if(phase!=="idle")return;
-  // El clic en Entrar es el gesto de usuario: aquí se pide el permiso del giroscopio (iOS)
+  const ins=hold.on&&inCircle();
+  if(ins){
+    hold.dw+=dt;
+    if(Math.random()<.3&&ps.length<MAX_PS)ps.push(new P(hold.x+(Math.random()-.5)*10,hold.y-Math.random()*22,"ember"));
+    if(hold.dw>DW*.6)window.__wake3d=true;   // la escena 3D empieza a calentarse antes de la quema
+  }else hold.dw=Math.max(0,hold.dw-dt*1.5);
+  btn.style.setProperty("--p",Math.min(1,hold.dw/DW).toFixed(3));
+  if(hold.dw>=DW)startEntry(false,{x:hold.x,y:hold.y});
+}
+page.addEventListener("pointerdown",e=>{
+  if(phase!=="idle"||e.button>0)return;
+  hold.on=true;hold.id=e.pointerId;hold.x=e.clientX;hold.y=e.clientY;
+  btn.classList.add("holding");hint.classList.add("hidden");
+  if(window.__flame)window.__flame.ignite(hold.x,hold.y,flameU());
+});
+addEventListener("pointermove",e=>{
+  if(!hold.on||e.pointerId!==hold.id)return;
+  hold.x=e.clientX;hold.y=e.clientY;
+  if(window.__flame)window.__flame.move(hold.x,hold.y);
+});
+function releaseFlame(e){
+  if(!hold.on||(e&&e.pointerId!==hold.id))return;
+  hold.on=false;btn.classList.remove("holding");
+  try{enableGyro()}catch(_){}   // iOS pide el permiso del giroscopio en un gesto del usuario
+  if(window.__flame)window.__flame.release();
+  if(phase==="idle"){hold.dw=0;btn.style.setProperty("--p",0);hint.classList.remove("hidden")}
+}
+addEventListener("pointerup",releaseFlame);
+addEventListener("pointercancel",releaseFlame);
+page.addEventListener("contextmenu",e=>e.preventDefault());
+
+// at = {x,y}: la flama ya está encendida donde el usuario la sostiene · sin 'at' (teclado o entrada automática): la flama sale sola en el círculo
+function startEntry(auto=false,at){
+  if(phase!=="idle")return;
+  hint.classList.add("hidden");btn.classList.add("active");
+  const r=btn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const ox=at?at.x:cx,oy=at?at.y:cy;
+  const begin=()=>{
+    const nBurst=IS_MOBILE?5:14;
+    for(let i=0;i<nBurst;i++)ps.push(new P(ox+(Math.random()-.5)*r.width*.6,oy,"ember"));
+    uploadContent(r);page.classList.add("burn");glC.style.display="block";org=[ox/W,oy/H];
+    phase="burning";t0=performance.now();
+  };
+  if(at){phase="fire";begin();return}
   try{ enableGyro(); }catch(_){}
-  phase="fire";hint.classList.add("hidden");btn.classList.add("active");
-  const heatMs = IS_MOBILE ? (auto ? 70 : 90) : (auto ? 40 : 55);
-  const toFade = IS_MOBILE ? (auto ? 420 : 700) : (auto ? 700 : 1100);
-  const toHide = IS_MOBILE ? 280 : (auto ? 350 : 450);
-  const toBurn = IS_MOBILE ? 420 : (auto ? 550 : 650);
+  phase="fire";
+  const holdMs=IS_MOBILE?(auto?1000:2200):(auto?1200:2600);
+  const u=flameU(),baseY=cy+r.height*.12;
+  if(window.__flame){window.__flame.ignite(cx,baseY,u);}
   const heat=setInterval(()=>{
     if(phase!=="fire"){clearInterval(heat);return}
     if(ps.length>=MAX_PS)return;
-    const r=btn.getBoundingClientRect();ps.push(new P(r.left+Math.random()*r.width,r.top+r.height/2,"ember"));
-  },heatMs);
-  setTimeout(()=>{
-    phase="fade";btn.classList.add("fading");
-    const r=btn.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
-    const nBurst=IS_MOBILE?5:14;
-    for(let i=0;i<nBurst;i++)ps.push(new P(cx+(Math.random()-.5)*r.width,cy,"ember"));
-    setTimeout(()=>{btn.style.visibility="hidden"},toHide);
-    setTimeout(()=>{
-      uploadContent(r);page.classList.add("burn");glC.style.display="block";org=[cx/W,cy/H];
-      phase="burning";t0=performance.now();
-    },toBurn);
-  },toFade);
+    ps.push(new P(cx+(Math.random()-.5)*r.width,baseY-Math.random()*u*2,"ember"));
+  },IS_MOBILE?90:55);
+  setTimeout(()=>{if(window.__flame)window.__flame.release();begin()},holdMs);
 }
 
-btn.addEventListener("click",()=>startEntry(false));
+// Teclado (Enter/Espacio sobre el círculo): entra con la flama automática. El clic del ratón no entra: hay que mantener la flama.
+btn.addEventListener("click",e=>{if(e.detail===0)startEntry(false)});
 
 // Si el auto-enter no pudo pedir permiso (iOS exige gesto), el primer toque en la galería lo activa
 document.addEventListener('pointerdown',function onceGyro(){
@@ -772,12 +934,162 @@ document.addEventListener('pointerdown',function onceGyro(){
   if(phase==='done'||phase==='burning'){try{enableGyro()}catch(_){}}
 },{passive:true});
 
-// Si ya entró antes, lanza la animación de fuego sola (sin esperar el clic)
+// Recuerda en el navegador el día en que ya quemó el papel: ese mismo día solo verá la transición (sin flama ni esperar).
+// Al día siguiente la fecha ya no coincide y vuelve a tener que encender la flama.
+function hoyKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 try{
-  if(localStorage.getItem('ferx_galeria_entered')==='1'){
-    window.__autoEnter=()=>setTimeout(()=>startEntry(true),120);
+  if(localStorage.getItem('ferx_galeria_entered')===hoyKey()){
+    window.__autoEnter=()=>setTimeout(()=>{const r=btn.getBoundingClientRect();startEntry(false,{x:r.left+r.width/2,y:r.top+r.height/2})},120);
   }
 }catch(_){}
+</script>
+<script>
+// ===== Flama de encendedor (de flama.html) sobre el círculo: WebGL2 con alfa para verse sobre el papel =====
+(function(){
+  const cv=document.getElementById('flame');
+  const g=cv&&cv.getContext('webgl2',{alpha:true,premultipliedAlpha:true,antialias:false});
+  if(!g){window.__flame=null;return}
+  const VS=`#version 300 es
+in vec2 a_pos;out vec2 vP;
+void main(){vec2 uv=a_pos*.5+.5;vP=vec2((uv.x-.5)*12.,uv.y*12.-2.);gl_Position=vec4(a_pos,0.,1.);}`;
+  const FS=`#version 300 es
+precision highp float;
+uniform float uT,uH,uK,uFl,uSm;uniform vec2 uLean;in vec2 vP;out vec4 fragColor;
+float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1.,0.)),f.x),mix(hs(i+vec2(0.,1.)),hs(i+vec2(1.,1.)),f.x),f.y);}
+float fbm(vec2 p){float a=.5,s=0.;for(int k=0;k<4;k++){s+=a*vn(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return s;}
+// tonos del fuego de la transición (verde de la marca)
+const vec3 ORANGE=vec3(.008,.875,0.);
+const vec3 CREAM=vec3(.85,1.,.78);
+const vec3 RED=vec3(.02,.30,.07);
+const vec3 TEAL=vec3(0.,.60,.04);
+const vec3 NAVY=vec3(.03,.17,.06);
+const vec3 RIM=vec3(0.,.60,.04);
+void main(){
+  float H=max(uH*(1.+.04*sin(uT*13.)+.02*sin(uT*29.+1.))*(1.+.25*uFl),.001);
+  float h=vP.y,eta=h/H,q=clamp(eta,0.,1.4);
+  float ox=(uLean.x*.35*H+.012*H*sin(uT*8.-h*1.7)+.008*H*sin(uT*17.+h*2.9))*q*q;
+  float x=vP.x-ox;
+  vec3 acc=vec3(0.);
+  if(eta>0.&&eta<1.){
+    float Rm=.16*H;
+    float rf=Rm*sqrt(clamp(eta/.3,0.,1.))*pow(1.-eta,.7);
+    if(rf>.002&&abs(x)<rf*1.7){
+      float dz=3.4*rf/36.,f=dz/Rm*4.5;
+      float sg=mix(.15,1.,smoothstep(.15,.7,uK));
+      float jt=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);
+      float Tc=mix(500.,1900.,smoothstep(0.,.6,eta));
+      for(int i=0;i<36;i++){
+        float z=((float(i)+jt)/36.-.5)*3.4*rf;
+        float s=length(vec2(x,z))/rf;
+        float Tp=s<1.?mix(Tc,2250.,smoothstep(.25,1.,s)):2250.*exp(-(s-1.)*6.)+300.;
+        float soot=smoothstep(.0,.5,eta)*smoothstep(-.1,.6,s*.5+eta*.9)*(1.-smoothstep(1.,1.12,s))*(1.-.5*smoothstep(.75,1.,eta));
+        vec3 cb=mix(RIM,ORANGE,1.-smoothstep(.95,1.35,s));
+        vec3 lo=mix(NAVY,RED,smoothstep(0.,.18,eta));
+        vec3 inner=mix(lo,ORANGE,smoothstep(.1,.3,eta));
+        inner=mix(inner,CREAM,smoothstep(.25,.55,eta));
+        inner=mix(inner,ORANGE,.8*smoothstep(.8,.95,eta));
+        inner=mix(inner,RIM,smoothstep(.9,1.,eta));
+        cb=mix(cb,inner,1.-smoothstep(.55,.95,s));
+        acc+=cb*soot*pow(Tp/2200.,3.5)*f*sg;
+        float e2=(s-.95)/.2;
+        acc+=RIM*exp(-e2*e2)*smoothstep(.1,.5,eta)*f*.9*min(1./max(rf/Rm,.0001),5.)*sg;
+        float bz=(1.-smoothstep(0.,.4,eta))*(1.-smoothstep(.9,1.05,s))*(1.-.6*smoothstep(0.,.7,s));
+        acc+=mix(RED*.6,NAVY,.35)*bz*f*.15;
+        float e=(s-1.)/.07;
+        float sh=exp(-e*e);
+        acc+=mix(NAVY,TEAL,1.-smoothstep(0.,.3,eta))*sh*pow(1.-abs(z)/max(length(vec2(x,z)),.0001),2.)*(1.4*(1.-smoothstep(0.,.3,eta))+.05)*f*1.5;
+      }
+    }
+  }
+  vec3 col=1.-exp(-acc*1.4);
+  float ax=clamp(h,0.,H*.85),qa=ax/H;
+  float dg=length(vec2(vP.x-uLean.x*.35*H*qa*qa,h-ax));
+  float R1=.25*H+.3,R2=.6*H+.8;
+  float win=(1.-smoothstep(3.5,6.,abs(vP.x)))*smoothstep(-2.,-.3,h)*(1.-smoothstep(7.,10.,h));
+  col+=(ORANGE*exp(-dg*dg/(R1*R1))*.11+RIM*(exp(-dg*dg/(R2*R2))*.13+exp(-dg/(R2*1.6))*.05))*clamp(uK*2.,0.,1.)*win;
+  // humo ligero (con alfa, para que se vea sobre el papel claro)
+  float sa=0.;vec3 sc=vec3(0.);
+  float Hs=max(H,.3);
+  float L=max(2.,min(5.5,9.2-Hs));
+  float u=(h-Hs*.6)/L;
+  if(u>0.&&u<1.){
+    float tipX=uLean.x*.35*Hs+.012*Hs*sin(uT*8.-Hs*1.7);
+    float xs=tipX+uLean.x*u*u*1.2+(.1+.45*u)*sin(u*8.-uT*2.2)+.2*u*sin(u*17.-uT*3.1+1.);
+    float w=.5+.45*u;
+    float wq=fbm(vec2(vP.x*1.6+sin(h*1.3-uT*.7)*.8,h*1.1-uT*.9));
+    float dx=(vP.x-xs+(wq-.5)*.9*u)/w;
+    float wisp=smoothstep(.28,.75,fbm(vec2(vP.x*2.2+uT*.12,h*1.7-uT*1.1)+wq*1.5));
+    float sm=exp(-dx*dx)*smoothstep(0.,.18,u)*pow(1.-u,1.2)*wisp*clamp(uSm*1.5,0.,1.);
+    sa=sm*.5;
+    sc=mix(vec3(.30,.24,.20),vec3(.26,.26,.28),u)*sa;
+  }
+  // chamuscado suave alrededor de la flama: da contraste sobre el papel claro
+  vec2 sp=vec2((vP.x-uLean.x*.35*H*.5)/(.3*Hs+.25),(h-.45*Hs)/(.6*Hs+.25));
+  float ab=exp(-dot(sp,sp)*3.)*.17*clamp(uK*2.,0.,1.);
+  vec3 bc=vec3(.10,.045,.02)*ab;
+  vec3 fc=col*clamp(uK*3.,0.,1.);
+  float mc=max(fc.r,max(fc.g,fc.b));
+  float af=smoothstep(.03,.5,mc);
+  float a1=sa+ab*(1.-sa);vec3 c1=sc+bc*(1.-sa);
+  fragColor=vec4(fc+c1*(1.-af),af+a1*(1.-af));
+}`;
+  function sh(t,src){const o=g.createShader(t);g.shaderSource(o,src);g.compileShader(o);if(!g.getShaderParameter(o,g.COMPILE_STATUS)){console.error(g.getShaderInfoLog(o));return null}return o}
+  const vs=sh(g.VERTEX_SHADER,VS),fs=sh(g.FRAGMENT_SHADER,FS);
+  if(!vs||!fs){window.__flame=null;return}
+  const pr=g.createProgram();g.attachShader(pr,vs);g.attachShader(pr,fs);g.linkProgram(pr);
+  if(!g.getProgramParameter(pr,g.LINK_STATUS)){console.error(g.getProgramInfoLog(pr));window.__flame=null;return}
+  g.useProgram(pr);
+  g.bindBuffer(g.ARRAY_BUFFER,g.createBuffer());
+  g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW);
+  const al=g.getAttribLocation(pr,'a_pos');g.enableVertexAttribArray(al);g.vertexAttribPointer(al,2,g.FLOAT,false,0,0);
+  const L={};['uT','uH','uK','uFl','uSm','uLean'].forEach(n=>L[n]=g.getUniformLocation(pr,n));
+  g.clearColor(0,0,0,0);
+  // dibujo de prueba: compila el shader ahora y no al tocar el círculo
+  g.viewport(0,0,1,1);g.uniform1f(L.uT,0);g.uniform1f(L.uH,3.4);g.uniform1f(L.uK,1);g.uniform1f(L.uFl,0);g.uniform1f(L.uSm,0);g.uniform2f(L.uLean,0,0);
+  g.drawArrays(g.TRIANGLES,0,3);g.finish();
+
+  const S={on:false,t:0,valve:0,igT:0,gas:0,lit:false,uK:0,flare:0,lean:0,sm:0,last:0,raf:0,nx:0,ny:0,tx:0,ty:0,u:48,size:576};
+  const place=()=>{cv.style.transform='translate('+(S.nx-S.size/2)+'px,'+(S.ny-10*S.u)+'px)'};
+  function frame(ts){
+    if(!S.on)return;
+    const dt=Math.min(.033,Math.max(.001,S.last?(ts-S.last)/1000:.016));S.last=ts;
+    S.t+=dt;const t=S.t;
+    // la flama sigue al puntero con suavizado; al moverla se inclina
+    const kf=1-Math.exp(-dt*16),px=S.nx;
+    S.nx+=(S.tx-S.nx)*kf;S.ny+=(S.ty-S.ny)*kf;place();
+    const vx=(S.nx-px)/dt/S.u;
+    // válvula abierta mientras se mantiene presionado; la chispa enciende a los .09 s
+    S.gas+=((S.valve?1:0)-S.gas)*(1-Math.exp(-dt/.13));
+    if(!S.lit&&S.valve&&t>=S.igT&&S.gas>.12){S.lit=true;S.flare=1}
+    if(S.lit&&S.gas<.06)S.lit=false;
+    const tg=S.lit?S.gas:0;
+    S.uK+=(tg-S.uK)*(1-Math.exp(-dt/(tg>S.uK?.08:.07)));
+    S.flare*=Math.exp(-dt*5);
+    const lt=Math.max(-1.5,Math.min(1.5,-vx*.06))+.04*Math.sin(t*1.3)+.03*Math.sin(t*2.9)+(S.valve?0:1);
+    S.lean+=(lt-S.lean)*(1-Math.exp(-dt/.12));
+    S.sm=Math.max(S.sm*Math.exp(-dt/1.0),S.uK);
+    g.viewport(0,0,cv.width,cv.height);g.clear(g.COLOR_BUFFER_BIT);
+    g.uniform1f(L.uT,t);g.uniform1f(L.uH,3.4*S.uK);g.uniform1f(L.uK,S.uK);g.uniform1f(L.uFl,S.flare);g.uniform1f(L.uSm,S.sm);g.uniform2f(L.uLean,S.lean,0);
+    g.drawArrays(g.TRIANGLES,0,3);
+    if(!S.valve&&S.sm<.03&&S.uK<.01){S.on=false;cv.style.display='none';return}
+    S.raf=requestAnimationFrame(frame);
+  }
+  // (x,y) = punto en px donde nace la flama · u = px por unidad de escena (la flama mide 3.4·u de alto)
+  window.__flame={
+    ignite(x,y,u){
+      const D=IS_MOBILE?1:Math.min(devicePixelRatio||1,2),size=12*u,k=Math.min(D,720/size);
+      S.u=u;S.size=size;S.nx=S.tx=x;S.ny=S.ty=y;
+      cv.style.width=size+'px';cv.style.height=size+'px';
+      cv.width=cv.height=Math.max(64,Math.round(size*k));
+      place();cv.style.display='block';
+      if(!S.on){Object.assign(S,{on:true,t:0,gas:0,uK:0,flare:0,lean:0,sm:0,last:0});cancelAnimationFrame(S.raf);S.raf=requestAnimationFrame(frame)}
+      S.valve=1;S.lit=false;S.igT=S.t+.09;
+    },
+    move(x,y){S.tx=x;S.ty=y},
+    release(){S.valve=0}
+  };
+})();
 </script>
 <script>
 const DEFAULT_FONT = 'bold 30px Figtree';
@@ -1805,11 +2117,30 @@ function CircularGallery(host, opts = {}) {
 //   text: título bajo la tarjeta · image: ruta de tu archivo (ej. "img/mi-foto.jpg"; vacío = color de muestra) · description: el prompt completo.
 // Agrega o quita líneas y cada carrusel se ajusta solo.
 // IMPORTANTE: para cargar imágenes locales abre la página desde un servidor (Live Server, "npx serve") o súbela a tu hosting; con file:// el navegador bloquea las texturas.
-const PROMPT_MUESTRA = 'Pega aquí el prompt completo de esta pieza.';
 const FOTOGRAFIAS = [
-  { text: 'Fotografía 01', image: '', description: PROMPT_MUESTRA }, { text: 'Fotografía 02', image: '', description: PROMPT_MUESTRA },
-  { text: 'Fotografía 03', image: '', description: PROMPT_MUESTRA }, { text: 'Fotografía 04', image: '', description: PROMPT_MUESTRA },
-  { text: 'Fotografía 05', image: '', description: PROMPT_MUESTRA }
+  {
+    text: 'On a light gray sofa',
+    image: 'https://ik.imagekit.io/n8qmt5rfh/On%20a%20light%20gray%20sofa',
+    description: 'Create a photograph of him lying on a light gray sofa, in a relaxed and confident posture. He\'s wearing a white dress shirt, a black tie with a subtle pattern, dark suspenders, and formal slacks. He\'s wearing black sunglasses. His legs are stretched out on top of each other on the sofa, looking relaxed. The setting is minimalist: plain walls, a neutral rug, and no additional decor. The lighting is soft and even, professionally filmed, with a focus on attitude and personal style.'
+  },
+  {
+    text: '2000s aesthetic',
+    image: 'https://ik.imagekit.io/n8qmt5rfh/2000s%20aesthetic',
+    description: 'Create a nighttime photo with a flash and a 2000s aesthetic, featuring a red digital timestamp in the corner. The image is taken at a payphone, with the subject\'s face based on an uploaded image, looking at the camera with a distant gaze. The subject wears an oversized white t-shirt and baggy cargo jeans. One hand holds the phone receiver. The scene includes strong contrast from the flash and blurred car lights in the urban background, evoking an early 2000s paparazzi vibe. Do not modify the details of the face.',
+    promptJson: '{\n  "prompt": "Create a nighttime photo with a flash and a 2000s aesthetic, featuring a red digital timestamp in the corner. The image is taken at a payphone, with the subject\'s face based on an uploaded image, looking at the camera with a distant gaze. The subject wears an oversized white t-shirt and baggy cargo jeans. One hand holds the phone receiver. The scene includes strong contrast from the flash and blurred car lights in the urban background, evoking an early 2000s paparazzi vibe. Do not modify the details of the face.",\n  "camera_settings": {\n    "lens": "35mm equivalent",\n    "aperture": "f/2.0",\n    "shutter_speed": "1/60s",\n    "iso": 400,\n    "flash": "direct frontal flash",\n    "white_balance": "neutral with slight warm tint"\n  },\n  "environment": {\n    "location": "urban street corner",\n    "lighting": "harsh flash with ambient car lights",\n    "timestamp": "red digital overlay, bottom right corner",\n    "background": "blurred car lights, dark urban textures"\n  },\n  "subject": {\n    "pose": "standing at payphone, hand on receiver",\n    "expression": "distant gaze toward camera",\n    "clothing": "oversized white t-shirt, baggy cargo jeans",\n    "face": "must remain unaltered from uploaded image"\n  },\n  "negative": "no stylization, no cinematic filters, no depth-of-field, no portrait mode, no bokeh, no HDR, no cartoon effects, no watermark, no artificial smoothing"\n}'
+  },
+  {
+    text: 'Cinematic and\nintrospective',
+    image: 'https://ik.imagekit.io/n8qmt5rfh/scene%20photograph%20with%20a%20cinematic%20and%20introspective%20aesthetic',
+    description: 'A vertical tripartite photograph with a cinematic, introspective aesthetic. Three stacked horizontal frames depict a person inside a minimalist gray elevator, wearing a slightly baggy black sweater, in three sequential moments of calm, reflection, and quiet solitude. Soft artificial overhead lighting with cool blue-gray tones, gentle shadows, and a glowing red \'7\' on the elevator floor indicator panel as a constant visual anchor across all frames.',
+    promptJson: '{\n  "prompt": "A vertical tripartite photograph with a cinematic, introspective aesthetic. Three stacked horizontal frames depict a person inside a minimalist gray elevator, wearing a slightly baggy black sweater, in three sequential moments of calm, reflection, and quiet solitude. Soft artificial overhead lighting with cool blue-gray tones, gentle shadows, and a glowing red \'7\' on the elevator floor indicator panel as a constant visual anchor across all frames.",\n  "format": {\n    "orientation": "vertical",\n    "layout": "three stacked horizontal panels (triptych)",\n    "aspect_ratio": "9:16",\n    "dimensions": "2160x3840",\n    "quality": "4K"\n  },\n  "panels": [\n    {\n      "position": "top",\n      "shot_type": "medium shot from behind",\n      "description": "The person stands inside the gray elevator with their back to the camera, gazing quietly toward the closed metallic doors. Relaxed posture, soft overhead light, and the red number \'7\' illuminated on the side panel."\n    },\n    {\n      "position": "middle",\n      "shot_type": "frontal medium shot",\n      "description": "Facing forward with a serene, thoughtful expression, the person stands with the closed elevator doors behind them. The red number \'7\' remains visible on the panel, subtly anchoring the scene."\n    },\n    {\n      "position": "bottom",\n      "shot_type": "close-up framed through closing doors",\n      "description": "Viewed from outside as the elevator doors slowly close, framing the person\'s face. Their gaze is soft, contemplative, and inward-looking. The lighting dims gently while the red \'7\' glows faintly on the left panel."\n    }\n  ],\n  "subject": {\n    "description": "PERSON",\n    "wardrobe": "slightly baggy black knit sweater",\n    "mood": "calm, introspective, quietly reflective"\n  },\n  "environment_and_style": {\n    "setting": "minimalist gray metallic elevator interior with no decorative elements",\n    "color_palette": ["cool gray", "matte black", "muted steel blue", "accent red"],\n    "lighting": "soft diffused artificial overhead light, gentle shadows",\n    "camera": {\n      "style": "contemplative cinematic digital photography",\n      "lens": "50mm",\n      "aperture": "f/2.8",\n      "texture": "high-definition detail in knit fabric and brushed metal",\n      "color_grading": "cool tones, slight desaturation, moderate restrained contrast"\n    }\n  },\n  "negative_prompt": "cartoonish stylization, duplicated features, excessive skin smoothing, HDR, flat background, extra limbs, distorted text"\n}'
+  },
+  {
+    text: 'Foto con John Wick',
+    image: 'https://ik.imagekit.io/n8qmt5rfh/foto%20con%20John%20Wick',
+    description: 'Cinematic macro close reunion inside an elevator with open doors and mirrored metal walls. The person from the image stands in a slightly worn black denim jacket over a black shirt and black denim pants, calm and looking toward the camera. Beside them, John Wick (Keanu Reeves) in a classic dark suit with a loose tie, shoulder to shoulder. Cool white ceiling lights, deep shadows, suspended dust particles, partial mirror reflections. Macro close-up from the right, shoulders to faces, ultra selective focus on expressions, f/1.4, high contrast, intimate and friendly mood.',
+    promptJson: '{\n  "scene_type": "cinematic_macroclose_reunion",\n  "setting": {\n    "location": "interior of an elevator",\n    "elevator": {\n      "doors": "open",\n      "walls": {\n        "material": "mirrored metal",\n        "mirror": {\n          "position": "right side wall",\n          "effect": "partially reflects both characters, adding emotional depth and visual duplication"\n        }\n      },\n      "lights": {\n        "count": 2,\n        "position": "elevator ceiling",\n        "color": "cool white",\n        "intensity": "medium",\n        "effect": "illuminate the faces from above, casting soft shadows downward"\n      }\n    },\n    "ambient_light": "minimal",\n    "surrounding": {\n      "shadows": "deep, dominate the background",\n      "dust_particles": {\n        "visible": true,\n        "location": "in the air near the lights",\n        "effect": "add suspended texture and a cinematic atmosphere"\n      }\n    }\n  },\n  "characters": [\n    {\n      "identity": "person in the image",\n      "position": "standing inside the elevator",\n      "clothing": {\n        "upper": { "type": "denim jacket", "color": "black", "style": "slightly worn" },\n        "inner": { "type": "shirt", "color": "black", "fit": "regular", "texture": "cotton, dull" },\n        "pants": { "type": "denim", "color": "black", "fit": "classic", "texture": "matte, aged" }\n      },\n      "expression": {\n        "gaze": "naturally towards the camera",\n        "emotion": ["calm", "relaxed", "observant"],\n        "intent": "convey serenity and a friendly connection"\n      }\n    },\n    {\n      "identity": "John Wick (played by Keanu Reeves)",\n      "position": "next to the main character, shoulder to shoulder",\n      "clothing": {\n        "style": "classic dark suit, slightly scruffy",\n        "details": "loose tie, intense but relaxed gaze"\n      },\n      "expression": {\n        "gaze": "slightly toward the viewer",\n        "emotion": ["serene", "surprised", "complicit"],\n        "intent": "reflect an unexpected and recent friendship"\n      }\n    }\n  ],\n  "camera": {\n    "perspective": "macro close-up",\n    "position": "from the right, framing from the shoulders to the faces of both",\n    "movement": "minimal, almost imperceptible",\n    "focus": {\n      "type": "ultra selective",\n      "target": "faces and expressions",\n      "effect": "maximum visual intimacy, completely blurred background"\n    },\n    "lens": {\n      "type": "macro",\n      "aperture": "f/1.4",\n      "effect": "extreme detail, emotional texture, emphasis on skin, gaze, and connection between both characters"\n    }\n  },\n  "mood": {\n    "tone": "calm, introspective, with a touch of friendly surprise",\n    "contrast": "high contrast between light and shadow",\n    "texture": "soft atmosphere, suspended dust, partial reflections in the mirror"\n  }\n}'
+  }
 ];
 const ILUSTRACIONES = [
   {
@@ -1908,98 +2239,99 @@ function muestra(i) {
     { el: 'railFoto', key: 'foto', items: FOTOGRAFIAS, off: 0 },
     { el: 'railIlu',  key: 'ilu',  items: ILUSTRACIONES, off: 5 }
   ];
-  const vivas = {};   // key -> { gal, activo }
+  const vivas = {};
   window.__galVivas = vivas;
 
-  // Perfil según pantalla: teléfono vertical / horizontal / tablet / PC
-  const perfil = () => {
-    const w = innerWidth, h = innerHeight;
-    if (w > h && h <= 520) return 'land';
-    if (w <= 700) return 'phone';
-    if (w <= 1024) return 'tablet';
-    return 'desk';
-  };
-  const CFG = {
-    // Teléfono: tarjetas grandes, poca curva, SIN fade lateral (conecta con el borde de la página)
-    // fade > 0 = degradado suave SOLO en los bordes del frame (las tarjetas laterales se desvanecen, no se cortan en seco)
-    // itemSize moderado para que el título quepa y el centro no entre en la zona de fade
-    phone:  { itemSize: 1.18, bend: 0.9,  gap: 0.16, font: '900 34px Figtree', fade: 0.13 },
-    land:   { itemSize: 1.1,  bend: 1.5,  gap: 0.18, font: '900 32px Figtree', fade: 0.12 },
-    tablet: { itemSize: 1.05, bend: 2.0,  gap: 0.2,  font: '900 32px Figtree', fade: 0.12 },
-    desk:   { itemSize: 0.95, bend: 2.6,  gap: 0.26, font: '900 30px Figtree', fade: 0.14 }
-  };
-  let perfilActual = perfil();
-  function crear(r, recrear) {
+  // Patrón tipo pared de pósters: mayoría normales, algunos altos, pocos anchos
+  const spanPattern = ['tall', '', '', 'wide', '', 'tall', '', '', '', 'tall', '', 'wide', '', '', 'tall', ''];
+
+  function MosaicGallery(host, items, off) {
+    host.innerHTML = '';
+    host.classList.add('rail');
+    const grid = document.createElement('div');
+    grid.className = 'mosaic';
+    host.appendChild(grid);
+
+    const cards = items.map((item, i) => {
+      const data = { ...item, image: item.image || (typeof muestra === 'function' ? muestra(off + i) : '') };
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mosaic-card';
+      btn.setAttribute('aria-label', (data.text || 'Ver prompt').replace(/\n/g, ' '));
+      const span = spanPattern[i % spanPattern.length];
+      if (span) btn.dataset.span = span;
+
+      const img = document.createElement('img');
+      img.src = data.image;
+      img.alt = data.text || '';
+      img.decoding = 'async';
+      img.loading = i < 8 ? 'eager' : 'lazy';
+
+      const title = document.createElement('p');
+      title.className = 'mosaic-title';
+      title.textContent = data.text || '';
+
+      btn.appendChild(img);
+      btn.appendChild(title);
+      grid.appendChild(btn);
+
+      const press = () => btn.setAttribute('data-pressed', '');
+      const release = () => btn.removeAttribute('data-pressed');
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointerleave', release);
+      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('click', () => {
+        btn.removeAttribute('data-pressed');
+        btn.setAttribute('data-pulse', '');
+        setTimeout(() => btn.removeAttribute('data-pulse'), 560);
+        if (window.openFlipCard) window.openFlipCard(data);
+      });
+      return { el: btn, item: data };
+    });
+
+    return {
+      grid,
+      cards,
+      destroy() {
+        host.innerHTML = '';
+      }
+    };
+  }
+
+  function crear(r) {
     const host = $(r.el);
-    const cfg = CFG[perfilActual];
     if (!host) { console.error('rail missing', r.el); return; }
-    // asegurar tamaño mínimo aunque el contenedor aún anime
-    if (host.clientHeight < 40) host.style.minHeight = '320px';
     const st = { gal: null, activo: r.items[0] };
     try {
-      st.gal = CircularGallery(host, {
-        items: r.items.map((p, i) => ({ ...p, image: p.image || muestra(r.off + i) })),
-        bend: cfg.bend, textColor: '#FEECBC', borderRadius: 0.05, scrollEase: 0.05,
-        fadeEdges: cfg.fade, itemSize: cfg.itemSize, gap: cfg.gap, intro: !recrear,
-        dpr: Math.min(window.devicePixelRatio || 1, (perfilActual==='phone'||perfilActual==='land') ? 1.25 : 2),
-        openOnClick: false,
-        font: cfg.font, fontUrl: 'https://fonts.googleapis.com/css2?family=Figtree:wght@900&display=swap',
-        onActiveChange: i => { st.activo = r.items[i]; },
-        onItemClick: (item) => { window.openFlipCard && window.openFlipCard(item); }
-      });
+      st.gal = MosaicGallery(host, r.items, r.off);
     } catch (e) {
-      console.error('CircularGallery error', e);
+      console.error('MosaicGallery error', e);
+      host.textContent = 'No se pudo iniciar el mosaico';
       st.gal = null;
-    }
-    if (!st.gal) {
-      host.textContent = 'No se pudo iniciar la galería (WebGL2)';
-      console.warn('CircularGallery returned null for', r.key);
-    } else {
-      // API pública de wake si el engine la expone
-      requestAnimationFrame(() => {
-        try { st.gal.wake && st.gal.wake(); } catch(_){}
-        window.dispatchEvent(new Event('resize'));
-      });
     }
     vivas[r.key] = st;
   }
-  // Se llama al TERMINAR la quema (host visible + tamaño real)
+
   window.iniciarGaleria = () => {
     if (vivas.foto) return;
-    perfilActual = perfil();
     rails.forEach(r => crear(r));
   };
-  // Al girar el teléfono o cambiar de tamaño la ventana, reajusta las tarjetas
-  let rzT = 0;
-  addEventListener('resize', () => {
-    clearTimeout(rzT);
-    rzT = setTimeout(() => {
-      if (!vivas.foto) return;
-      const p = perfil();
-      if (p === perfilActual) return;
-      perfilActual = p;
-      Object.keys(vivas).forEach(k => {
-        try { vivas[k].gal && vivas[k].gal.destroy && vivas[k].gal.destroy(); } catch (_) {}
-        delete vivas[k];
-      });
-      rails.forEach(r => crear(r, true));
-    }, 250);
-  });
 
-  // Parallax de las tarjetas con el giroscopio (sutil)
-  (function railGyro(){
-    const gy=window.__gyro||{beta:0,gamma:0};
-    if(gy.ok){
-      const rx=(gy.beta||0)*-0.12;
-      const ry=(gy.gamma||0)*0.18;
-      rails.forEach(r=>{
-        const host=$(r.el);
-        if(host) host.style.transform=`perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+  // Giroscopio leve sobre cada mosaico (no agresivo)
+  (function mosaicGyro() {
+    const gy = window.__gyro || { beta: 0, gamma: 0 };
+    if (gy.ok) {
+      const rx = (gy.beta || 0) * -0.06;
+      const ry = (gy.gamma || 0) * 0.09;
+      Object.values(vivas).forEach(v => {
+        if (v.gal && v.gal.grid) {
+          v.gal.grid.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+        }
       });
     }
-    requestAnimationFrame(railGyro);
+    requestAnimationFrame(mosaicGyro);
   })();
-
 })();
 
 // ===== Flip card (giro 3D con prompt) =====
@@ -2613,7 +2945,7 @@ const clock=new THREE.Clock();
 const lampWorld=new THREE.Vector3(),dir=new THREE.Vector3();
 let warm=2;
 function frame(){
-  if(typeof phase!=='undefined'&&phase==='idle'&&warm--<=0){requestAnimationFrame(frame);return}
+  if(typeof phase!=='undefined'&&phase==='idle'&&!window.__wake3d&&warm--<=0){requestAnimationFrame(frame);return}
   const t=clock.getElapsedTime();
   prog+=(target-prog)*.05;vel+=((prog-lastProg)*60-vel)*.1;lastProg=prog;
   const sw=Math.sin(prog*Math.PI*2),sc=Math.cos(prog*Math.PI*1.4);
